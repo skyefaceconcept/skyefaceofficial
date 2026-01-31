@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quote Modal Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Quote Modal Test</h1>
+        
+        <div class="test-section">
+            <h3>Test 1: Button Click</h3>
+            <button type="button" class="btn btn-green btn-sm open-quote-btn" data-package="Test Package" style="background: #28a745; color: white;">Open Quote Modal</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Console Log</h3>
+            <p>Open your browser's Developer Tools (F12) and check the Console tab for any errors when clicking the button above.</p>
+            <pre id="console-log"></pre>
+        </div>
+    </div>
+
+    <!-- Quote Modal -->
+    <div class="modal fade" id="quote-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Request a Quote</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Modal is working correctly!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Log all events to console
+        $(document).on('click', '.open-quote-btn', function (e) {
+            console.log('Button clicked!');
+            e.preventDefault();
+            var pkg = $(this).data('package') || '';
+            console.log('Package:', pkg);
+            $('#quote-modal').modal('show');
+            console.log('Modal shown');
+        });
+
+        // Also test with plain JavaScript
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('open-quote-btn')) {
+                console.log('Plain JS detected click');
+            }
+        });
+    </script>
+</body>
+</html>

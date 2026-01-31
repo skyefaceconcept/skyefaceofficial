@@ -1,0 +1,20 @@
+$repairs = \App\Models\Repair::whereNotNull('payment_reference')->get(['id', 'invoice_number', 'payment_reference', 'payment_status']);
+echo "=== Repairs with payment_reference ===\n";
+foreach ($repairs as $r) {
+    echo "Repair #{$r->id}: {$r->invoice_number}, Ref: {$r->payment_reference}, Status: {$r->payment_status}\n";
+}
+
+echo "\n=== All Payments in DB ===\n";
+$payments = \App\Models\Payment::all(['id', 'quote_id', 'repair_id', 'reference', 'status', 'payment_source']);
+echo "Total: " . count($payments) . "\n";
+foreach ($payments as $p) {
+    $type = $p->quote_id ? "QUOTE" : ($p->repair_id ? "REPAIR" : "UNKNOWN");
+    echo "Payment #{$p->id}: {$type}, Ref: {$p->reference}, Status: {$p->status}\n";
+}
+
+echo "\n=== Repair Payments Only ===\n";
+$repairPayments = \App\Models\Payment::whereNotNull('repair_id')->get(['id', 'repair_id', 'reference', 'status']);
+echo "Count: " . count($repairPayments) . "\n";
+foreach ($repairPayments as $p) {
+    echo "Payment #{$p->id}: Repair #{$p->repair_id}\n";
+}

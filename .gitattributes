@@ -1,0 +1,31 @@
+* text=auto eol=lf
+
+*.blade.php diff=html
+*.css diff=css
+*.html diff=html
+*.md diff=markdown
+*.php diff=php
+
+# Normalise text files
+* text=auto
+
+# Ensure scripts keep LF
+*.sh text eol=lf
+
+# Treat images/binaries as binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+
+# Common text files
+*.php text
+*.js text
+*.css text
+*.md text
+*.txt text
+
+/.github export-ignore
+CHANGELOG.md export-ignore
+.styleci.yml export-ignore
