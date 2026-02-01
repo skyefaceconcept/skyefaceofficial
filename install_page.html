@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Install - Laravel</title>
+    <style>
+        body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding: 2rem; }
+        .container { max-width: 640px; margin: 0 auto; }
+        label { display: block; margin-top: 1rem; font-weight: 600; }
+        input { width: 100%; padding: .5rem; margin-top: .25rem; }
+        .row { display:flex; gap:1rem; }
+        .small { width: 48%; }
+        .btn { margin-top:1rem; padding: .75rem 1rem; background:#111827; color:white; border:none; cursor:pointer }
+        .note { color:#6b7280; font-size:.9rem }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Installer</h1>
+        <p class="note">This installer runs in stages: <strong>1) Database</strong> → <strong>2) Admin & Finalize</strong>.</p>
+
+        <nav style="margin-top:1rem">
+            <strong>Stage:</strong>
+            <span style="margin-left: .5rem;">
+                <a href="http://127.0.0.1:8000/install?step=1" style="text-decoration: none; color: #111827">1. Database</a>
+                &nbsp;•&nbsp;
+                <a href="http://127.0.0.1:8000/install?step=2" style="text-decoration: none; color: #6b7280">2. Migrate</a>
+                &nbsp;•&nbsp;
+                <a href="http://127.0.0.1:8000/install?step=3" style="text-decoration: none; color: #6b7280">3. Admin</a>
+            </span>
+        </nav>
+
+        
+        
+                    <form id="db-form" method="post" action="http://127.0.0.1:8000/install/db-create">
+                <input type="hidden" name="_token" value="hHYuFuaFU7dOfkNFCe2ZRJuyRjcBWVX138iHXUsk" autocomplete="off">                <label for="db_host">DB Host</label>
+                <input id="db_host" name="db_host" value="127.0.0.1" required />
+
+                <div class="row">
+                    <div class="small">
+                        <label for="db_port">DB Port</label>
+                        <input id="db_port" name="db_port" value="3306" />
+                    </div>
+                    <div class="small">
+                        <label for="db_database">Database name</label>
+                        <input id="db_database" name="db_database" value="skyefacedb" required />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="small">
+                        <label for="db_username">DB username</label>
+                        <input id="db_username" name="db_username" value="skyeofficial" />
+                    </div>
+                    <div class="small">
+                        <label for="db_password">DB password</label>
+                        <input id="db_password" name="db_password" value="Paff*Bukky@20266" />
+                    </div>
+                </div>
+
+                <div style="margin-top:1rem">
+                    <label><input type="checkbox" id="persist" name="persist" checked /> Save DB settings to <code>.env</code></label>
+                </div>
+
+                <div id="db-message" style="margin-top:1rem"></div>
+
+                <div style="display:flex;gap:0.5rem;align-items:center;margin-top:1rem">
+                    <button id="db-create-btn" class="btn" type="button">Create Database</button>
+                    <button id="db-test-btn" class="btn" type="button" style="background:#6b7280">Test Connection</button>
+                </div>
+            </form>
+
+            <script>
+                const dbForm = document.getElementById('db-form');
+                const createBtn = document.getElementById('db-create-btn');
+                const testBtn = document.getElementById('db-test-btn');
+                const message = document.getElementById('db-message');
+                const csrf = 'hHYuFuaFU7dOfkNFCe2ZRJuyRjcBWVX138iHXUsk';
+                const dbTestUrl = 'http://127.0.0.1:8000/install/db-test';
+                const dbCreateUrl = 'http://127.0.0.1:8000/install/db-create';
+
+                // Helper to send form data to a route and return parsed JSON
+                async function postForm(url, btnElement, actionLabel) {
+                    message.style.color = 'black';
+                    message.textContent = actionLabel + '...';
+                    btnElement.disabled = true;
+                    const formData = new FormData(dbForm);
+                    formData.set('persist', document.getElementById('persist').checked ? '1' : '0');
+                    try {
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrf,
+                                'Accept': 'application/json'
+                            },
+                            credentials: 'same-origin',
+                            body: formData
+                        });
+                        const json = await res.json();
+                        if (res.ok && json.success) {
+                            message.style.color = 'green';
+                            message.textContent = json.message;
+                            return json;
+                        } else {
+                            message.style.color = 'crimson';
+                            message.textContent = json.message || 'Unexpected response';
+                            return json;
+                        }
+                    } catch (err) {
+                        console.error('Installer request error', err);
+                        message.style.color = 'crimson';
+                        message.textContent = err.message || 'Request failed (see console)';
+                        return { success: false, message: err.message };
+                    } finally {
+                        btnElement.disabled = false;
+                    }
+                }
+
+                createBtn.addEventListener('click', async (e) => {
+                    // Create the DB first
+                    const result = await postForm(dbCreateUrl, createBtn, 'Creating database');
+                    if (result && result.success) {
+                        // After creating DB, move to step 2 (Migrate)
+                        window.location = 'http://127.0.0.1:8000/install?step=2';
+                    }
+                });
+
+                testBtn.addEventListener('click', async (e) => {
+                    const result = await postForm(dbTestUrl, testBtn, 'Testing connection');
+                    if (result && result.success) {
+                        message.textContent = result.message + '. Redirecting to migrate step...';
+                        setTimeout(() => { window.location = 'http://127.0.0.1:8000/install?step=2'; }, 900);
+                    }
+                });
+            </script>
+        
+        
+        
+        
+            </div>
+</body>
+</html>

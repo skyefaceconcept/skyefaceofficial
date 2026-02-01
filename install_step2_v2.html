@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Install - Laravel</title>
+    <style>
+        body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding: 2rem; }
+        .container { max-width: 640px; margin: 0 auto; }
+        label { display: block; margin-top: 1rem; font-weight: 600; }
+        input { width: 100%; padding: .5rem; margin-top: .25rem; }
+        .row { display:flex; gap:1rem; }
+        .small { width: 48%; }
+        .btn { margin-top:1rem; padding: .75rem 1rem; background:#111827; color:white; border:none; cursor:pointer }
+        .note { color:#6b7280; font-size:.9rem }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Installer</h1>
+        <p class="note">This installer runs in stages: <strong>1) Database</strong> → <strong>2) Admin & Finalize</strong>.</p>
+
+        <nav style="margin-top:1rem">
+            <strong>Stage:</strong>
+            <span style="margin-left: .5rem;">
+                <a href="http://127.0.0.1:8000/install?step=1" style="text-decoration: none; color: #6b7280">1. Database</a>
+                &nbsp;•&nbsp;
+                <a href="http://127.0.0.1:8000/install?step=2" style="text-decoration: none; color: #111827">2. Migrate</a>
+                &nbsp;•&nbsp;
+                <a href="http://127.0.0.1:8000/install?step=3" style="text-decoration: none; color: #6b7280">3. Admin</a>
+            </span>
+        </nav>
+
+        
+        
+        
+        
+                    <h3 style="margin-top:1.25rem">Database (summary)</h3>
+            <p class="note">Host: <strong>127.0.0.1</strong>
+            &nbsp;•&nbsp; DB: <strong>skyefacedb</strong>
+            &nbsp;•&nbsp; User: <strong>skyeofficial</strong></p>
+
+            <form id="db-test-form">
+                <input type="hidden" name="_token" value="voQb9gIyguv0AWjxKsbusjVySCHHbLQkUtCPGQQn" autocomplete="off">                <input type="hidden" name="db_host" value="127.0.0.1" />
+                <input type="hidden" name="db_port" value="3306" />
+                <input type="hidden" name="db_database" value="skyefacedb" />
+                <input type="hidden" name="db_username" value="skyeofficial" />
+                <input type="hidden" name="db_password" value="Paff*Bukky@20266" />
+            </form>
+
+            <div style="display:flex;gap:0.5rem;align-items:center;margin-top:1rem">
+                <button id="run-migrations-btn" class="btn" type="button">Run Migrations</button>
+                <button id="migrate-test-btn" class="btn" type="button" style="background:#6b7280">Test Connection</button>
+                <a href="http://127.0.0.1:8000/install?step=1" class="btn" style="background:#e5e7eb;color:#111">Back</a>
+            </div>
+
+            <div id="migrate-output" style="white-space:pre-wrap;background:#f3f4f6;border-radius:6px;padding:0.75rem;margin-top:1rem;display:none"></div>
+
+            <div id="migration-list" style="margin-top:1rem;background:#fff;border:1px solid #e5e7eb;padding:0.75rem;border-radius:6px;display:none">
+                <strong>Migrations</strong>
+                <ul id="migration-items" style="list-style:none;padding-left:0;margin-top:0.5rem"></ul>
+            </div>
+
+            <style>
+                .mig-pending { color: #6b7280 }
+                .mig-running { color: #f59e0b }
+                .mig-done { color: #10b981; font-weight:600 }
+                .mig-failed { color: #ef4444; font-weight:600 }
+                .mig-item { padding:0.25rem 0; border-bottom: 1px dashed #efefef }
+            </style>
+
+            <script>
+                const runBtn = document.getElementById('run-migrations-btn');
+                const testBtn2 = document.getElementById('migrate-test-btn');
+                const migrateOutput = document.getElementById('migrate-output');
+                const migrationList = document.getElementById('migration-list');
+                const migrationItems = document.getElementById('migration-items');
+                const testForm = document.getElementById('db-test-form');
+                const csrf2 = 'voQb9gIyguv0AWjxKsbusjVySCHHbLQkUtCPGQQn';
+                const dbMigrateUrl2 = '/install/db-migrate';
+                const dbTestUrl2 = '/install/db-test';
+                const dbMigrateStartPath = '/install/db-migrate-start';
+                const dbMigrateStatusPath = '/install/db-migrate-status';
+
+                // Surface any JS errors to the installer UI for easier debugging
+                window.onerror = function(message, source, lineno, colno, error) {
+                    try {
+                        const out = document.getElementById('migrate-output') || document.getElementById('db-message');
+                        if (out) {
+                            out.style.display = 'block';
+                            out.style.color = 'crimson';
+                            out.textContent = 'JS Error: ' + message + ' at ' + source + ':' + lineno;
+                        }
+                    } catch (e) {}
+                    console.error('Installer window.onerror', message, source, lineno, colno, error);
+                };
+
+                function renderMigrations(migs) {
+                    migrationItems.innerHTML = '';
+                    if (!migs || !migs.length) {
+                        migrationList.style.display = 'none';
+                        return;
+                    }
+                    migrationList.style.display = 'block';
+                    for (const m of migs) {
+                        const li = document.createElement('li');
+                        li.className = 'mig-item mig-pending';
+                        li.setAttribute('data-name', m.name);
+                        li.innerHTML = `<span style="display:inline-block;width:70%">${m.name}</span><span style="float:right" class="mig-status">${m.status || 'pending'}</span>`;
+                        migrationItems.appendChild(li);
+                    }
+                }
+
+                function updateMigrationStatus(migs) {
+                    for (const m of migs) {
+                        const el = migrationItems.querySelector(`[data-name='${m.name}']`);
+                        if (!el) continue;
+                        const statusEl = el.querySelector('.mig-status');
+                        const s = (m.status || 'pending').toLowerCase();
+                        // Map internal statuses to friendly labels
+                        const labelMap = { done: 'Done', failed: 'Failed', running: 'Running', pending: 'Pending' };
+                        statusEl.textContent = labelMap[s] || s;
+                        el.classList.remove('mig-pending','mig-running','mig-done','mig-failed');
+                        if (s === 'done') el.classList.add('mig-done');
+                        else if (s === 'failed') el.classList.add('mig-failed');
+                        else if (s === 'running') el.classList.add('mig-running');
+                        else el.classList.add('mig-pending');
+                    }
+                }
+
+                async function postFormFromElement(url, formElement, btnEl, actionLabel) {
+                    migrateOutput.style.color = 'black';
+                    migrateOutput.style.display = 'block';
+                    migrateOutput.textContent = actionLabel + '...\n';
+                    btnEl.disabled = true;
+                    const formData = new FormData(formElement);
+                    try {
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': csrf2, 'Accept': 'application/json' },
+                            credentials: 'include',
+                            body: formData
+                        });
+                        let json;
+                        if (!res.ok) {
+                            const txt = await res.text();
+                            try { json = JSON.parse(txt); } catch (e) { json = { success: false, message: 'Server error: ' + res.status + ' - ' + txt }; }
+                        } else {
+                            json = await res.json();
+                        }
+                        if (res.ok && json.success) {
+                            migrateOutput.style.color = 'green';
+                            migrateOutput.textContent += json.output || json.message || 'Success';
+                            return json;
+                        } else {
+                            migrateOutput.style.color = 'crimson';
+                            migrateOutput.textContent += json.message || 'Error';
+                            return json;
+                        }
+                    } catch (err) {
+                        migrateOutput.style.color = 'crimson';
+                        migrateOutput.textContent += (err.message || 'Request failed');
+                        return { success: false, message: err.message };
+                    } finally {
+                        btnEl.disabled = false;
+                    }
+                }
+
+                runBtn.addEventListener('click', async () => {
+                    // Do a quick ping first so user sees immediate response, then start migration
+                    migrateOutput.style.display = 'block';
+                    migrateOutput.style.color = 'black';
+                    migrateOutput.textContent = 'Pinging server before migration...';
+                    try {
+                        const pingRes = await fetch('/install/ping', { credentials: 'include' });
+                        if (!pingRes.ok) throw new Error('Ping failed: ' + pingRes.status);
+                        const pj = await pingRes.json();
+                        migrateOutput.textContent = 'Ping OK: ' + JSON.stringify(pj) + '\nStarting background migration...';
+
+                    // Immediate UI feedback so clicks never seem unresponsive
+                    migrateOutput.textContent = 'Run Migrations clicked...\n' + migrateOutput.textContent; 
+                    } catch (pe) {
+                        migrateOutput.style.color = 'crimson';
+                        migrateOutput.textContent = 'Ping failed: ' + (pe.message || pe);
+                        return;
+                    }
+
+                    runBtn.disabled = true;
+
+                    try {
+                        const res = await fetch(dbMigrateStartPath, { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf2, 'Accept': 'application/json' }, credentials: 'include' });
+                        let json;
+                        if (!res.ok) {
+                            // Try to show server response body for easier debugging
+                            let txt = await res.text();
+                            try {
+                                json = JSON.parse(txt);
+                            } catch (e) {
+                                migrateOutput.style.color = 'crimson';
+                                migrateOutput.textContent += '\nServer responded: ' + res.status + ' - ' + txt;
+                                runBtn.disabled = false;
+                                return;
+                            }
+                        } else {
+                            json = await res.json();
+                        }
+
+                        if (!json.success) {
+                            migrateOutput.style.color = 'crimson';
+                            migrateOutput.textContent += '\n' + (json.message || 'Failed to start migration');
+                            runBtn.disabled = false;
+                            return;
+                        }
+
+                        // Poll status endpoint until done/error
+                        const poll = async () => {
+                            const sres = await fetch(dbMigrateStatusPath, { method: 'GET', headers: { 'Accept': 'application/json' }, credentials: 'include' });
+                            const sjson = await sres.json();
+                            const status = sjson.status || {};
+                            migrateOutput.textContent = '';
+                            if (sjson.log) migrateOutput.textContent += sjson.log + '\n';
+
+                            // Render or update migration list
+                            const migs = status.migrations || status.migrations === undefined ? status.migrations : null;
+                            if (migs) {
+                                // first time render if not present
+                                if (migrationItems.children.length === 0) {
+                                    renderMigrations(migs);
+                                }
+                                updateMigrationStatus(migs);
+                            }
+
+                            migrateOutput.textContent += '\nStatus: ' + (status.status || 'unknown');
+
+                            if (status.status === 'running') {
+                                setTimeout(poll, 1500);
+                            } else if (status.status === 'done') {
+                                migrateOutput.style.color = 'green';
+                                migrateOutput.textContent += '\nMigration completed successfully.';
+                                // enable test and auto-run it
+                                testBtn2.disabled = false;
+                                const test = await postFormFromElement(dbTestUrl2, testForm, testBtn2, 'Testing connection');
+                                if (test && test.success) {
+                                    setTimeout(() => { window.location = 'http://127.0.0.1:8000/install?step=3'; }, 800);
+                                }
+                                runBtn.disabled = false;
+                            } else if (status.status === 'error') {
+                                migrateOutput.style.color = 'crimson';
+                                migrateOutput.textContent += '\nMigration failed: ' + (status.message || 'See log for details');
+                                runBtn.disabled = false;
+                            } else {
+                                runBtn.disabled = false;
+                            }
+                        };
+
+                        setTimeout(poll, 1000);
+                    } catch (err) {
+                        console.error('Migration start error', err);
+                        migrateOutput.style.color = 'crimson';
+                        migrateOutput.textContent += '\n' + (err.message || 'Request failed (see console)');
+                        runBtn.disabled = false;
+                    }
+                });
+
+                testBtn2.addEventListener('click', async () => {
+                    const outEl = document.getElementById('db-message') || migrateOutput;
+                    outEl.style.display = 'block';
+                    outEl.style.color = 'black';
+                    outEl.textContent = 'Pinging server for DB test...';
+                    try {
+                        const pingRes = await fetch('/install/ping', { credentials: 'include' });
+                        if (!pingRes.ok) throw new Error('Ping failed: ' + pingRes.status);
+                        const pj = await pingRes.json();
+                        outEl.textContent = 'Ping OK: ' + JSON.stringify(pj) + '\nTesting DB connection...';
+
+                    outEl.textContent = 'Test Connection clicked...\n' + outEl.textContent;
+                    } catch (pe) {
+                        outEl.style.color = 'crimson';
+                        outEl.textContent = 'Ping failed: ' + (pe.message || pe);
+                        return;
+                    }
+
+                    const test = await postFormFromElement(dbTestUrl2, testForm, testBtn2, 'Testing connection');
+                    if (test && test.success) {
+                        setTimeout(() => { window.location = 'http://127.0.0.1:8000/install?step=3'; }, 800);
+                    }
+                });
+            </div>
+        
+        
+            </div>
+</body>
+</html>

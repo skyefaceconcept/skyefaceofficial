@@ -16,7 +16,13 @@ return new class extends Migration
             $table->string('logo')->nullable();
             $table->string('favicon')->nullable();
             $table->string('name_logo')->nullable();
+
+            // Added merged fields
             $table->boolean('show_menu_offer_image')->default(true);
+            $table->string('company_name')->nullable();
+            $table->string('cac_number')->nullable();
+            $table->string('rc_number')->nullable();
+
             $table->timestamps();
         });
     }

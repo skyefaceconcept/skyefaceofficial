@@ -33,7 +33,10 @@ if (! file_exists(storage_path('app/installed'))) {
     Route::post('/install/db-migrate', [InstallController::class, 'dbMigrate'])->name('install.dbmigrate');
     Route::post('/install/db-migrate-start', [InstallController::class, 'dbMigrateStart'])->name('install.dbmigrate_start');
     Route::get('/install/db-migrate-status', [InstallController::class, 'dbMigrateStatus'])->name('install.dbmigrate_status');
+    // List available migration files (for installer UI)
+    Route::get('/install/list-migrations', [InstallController::class, 'listMigrations'])->name('install.list_migrations');
     Route::post('/install/db-test', [InstallController::class, 'dbTest'])->name('install.dbtest');
+    Route::post('/install/queue-work-once', [InstallController::class, 'queueWorkOnce'])->name('install.queuework_once');
 
 // Temporary debug route to quickly test DB connectivity from the browser (dev only)
 Route::get('/install/debug-test', function () {
@@ -55,6 +58,19 @@ Route::get('/install/debug-test', function () {
 Route::get('/install/ping', function () {
     return response()->json(['ok' => true, 'time' => now()->toDateTimeString()]);
 })->name('install.ping');
+
+// Client-side debug logging endpoint used by the installer UI to send JS errors and click events
+Route::post('/install/client-log', function (Request $request) {
+    try {
+        \Log::info('Installer client log', ['payload' => $request->all(), 'ip' => $request->ip(), 'headers' => [
+            'user-agent' => $request->header('User-Agent'),
+            'referer' => $request->header('Referer')
+        ]]);
+    } catch (\Exception $e) {
+        // ignore logging errors
+    }
+    return response()->json(['success' => true]);
+});
 
     // Redirect everything else to the installer, but allow common endpoints used
     // during setup (payment callbacks, api routes, branding assets, test-email)

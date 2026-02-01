@@ -37,6 +37,12 @@ class AppServiceProvider extends ServiceProvider
         // Register mail view namespace
         View::addNamespace('mail', resource_path('views/emails'));
 
+        // If the app isn't yet installed, force file session/cache drivers so installer can run without DB tables
+        if (! file_exists(storage_path('app/installed'))) {
+            Log::info('AppServiceProvider: installer detected — forcing file session/cache to avoid DB sessions during installation.');
+            config(['session.driver' => 'file', 'cache.default' => 'file']);
+        }
+
         // Register the SuperAdmin middleware
         $router->aliasMiddleware('is.superadmin', IsSuperAdmin::class);
         $router->aliasMiddleware('redirect.superadmin', RedirectSuperAdminToDashboard::class);

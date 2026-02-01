@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('payments', function (Blueprint $table) {
-            // Make quote_id nullable since payments can be for repairs too
-            $table->foreignId('quote_id')->nullable()->change();
-        });
+        // Already covered by the payments create migration (quote_id is nullable by default). No-op.
+        if (Schema::hasTable('payments')) {
+            return;
+        }
     }
 
     /**

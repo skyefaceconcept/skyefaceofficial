@@ -170,42 +170,37 @@ class InstallController extends Controller
             try { \Illuminate\Support\Facades\Log::warning('dbMigrateStart connection reset failed', ['error' => $e->getMessage()]); } catch (\Exception $__) {}
         }
 
-        // Start the background artisan command which will update status file
-        // Use PHP_BINARY to ensure we call the same PHP executable used by this process
-        $cmd = [PHP_BINARY, base_path('artisan'), 'install:migrate-start'];
-        $process = new Process($cmd, base_path());
+        // Start the migration job via Laravel queue (more reliable cross-platform approach)
+        $statusPath = storage_path('app/install_migrate_status.json');
+        // Guard: if a migration is already running, refuse to start another
+        if (file_exists($statusPath)) {
+            $raw = @file_get_contents($statusPath);
+            $decoded = json_decode($raw, true) ?: [];
+            if (isset($decoded['status']) && $decoded['status'] === 'running') {
+                try { \Illuminate\Support\Facades\Log::warning('dbMigrateStart refused: already running'); } catch (\Exception $__) {}
+                return response()->json(['success' => false, 'message' => 'Migration already in progress'], 409);
+            }
+        }
+
+        // Write initial running status with list of migrations
+        $files = glob(database_path('migrations') . DIRECTORY_SEPARATOR . '*.php');
+        natsort($files);
+        $migs = [];
+        foreach ($files as $f) {
+            $migs[] = ['name' => basename($f), 'status' => 'pending'];
+        }
+
+        $initial = ['status' => 'running', 'started_at' => now()->toDateTimeString(), 'migrations' => $migs];
+        @file_put_contents($statusPath, json_encode($initial, JSON_PRETTY_PRINT));
+        @file_put_contents(storage_path('logs/install-migrate.log'), "[".now()->toDateTimeString()."] Queued migrations\n", FILE_APPEND);
 
         try {
-            $process->start();
-            // Give it a small moment to error out if the binary/path is incorrect
-            usleep(150000);
-            if ($process->isRunning() || $process->getExitCode() === null) {
-                try { \Illuminate\Support\Facades\Log::info('dbMigrateStart started background process'); } catch (\Exception $__) {}
-                return response()->json(['success' => true, 'message' => 'Migration started']);
-            }
-
-            // Unexpected non-running process - try fallback to synchronous run
-            $output = null;
-            try {
-                Artisan::call('install:migrate-start');
-                $output = Artisan::output();
-                try { \Illuminate\Support\Facades\Log::info('dbMigrateStart fallback sync executed', ['output' => substr($output,0,2000)]); } catch (\Exception $__) {}
-                return response()->json(['success' => true, 'message' => 'Migration run synchronously as fallback', 'output' => $output]);
-            } catch (\Exception $ex) {
-                try { \Illuminate\Support\Facades\Log::error('dbMigrateStart fallback failed', ['error' => $ex->getMessage()]); } catch (\Exception $__) {}
-                return response()->json(['success' => false, 'message' => 'Failed to start migration (fallback): ' . $ex->getMessage()], 500);
-            }
-        } catch (\Exception $e) {
-            // Final fallback: attempt synchronous migration
-            try {
-                Artisan::call('install:migrate-start');
-                $output = Artisan::output();
-                try { \Illuminate\Support\Facades\Log::info('dbMigrateStart error fallback sync', ['output' => substr($output,0,2000)]); } catch (\Exception $__) {}
-                return response()->json(['success' => true, 'message' => 'Migration run synchronously after error', 'output' => $output]);
-            } catch (\Exception $ex) {
-                try { \Illuminate\Support\Facades\Log::error('dbMigrateStart failed', ['error' => $e->getMessage(), 'fallback' => $ex->getMessage()]); } catch (\Exception $__) {}
-                return response()->json(['success' => false, 'message' => 'Failed to start background migration: ' . $e->getMessage() . ' / ' . $ex->getMessage()], 500);
-            }
+            \App\Jobs\RunMigrationsJob::dispatch();
+            try { \Illuminate\Support\Facades\Log::info('dbMigrateStart dispatched RunMigrationsJob'); } catch (\Exception $__) {}
+            return response()->json(['success' => true, 'message' => 'Migration started (queued)', 'queue_driver' => config('queue.default')]);
+        } catch (\Exception $ex) {
+            try { \Illuminate\Support\Facades\Log::error('dbMigrateStart dispatch failed', ['error' => $ex->getMessage()]); } catch (\Exception $__) {}
+            return response()->json(['success' => false, 'message' => 'Failed to dispatch migration job: ' . $ex->getMessage()], 500);
         }
     }
 
@@ -235,11 +230,65 @@ class InstallController extends Controller
         return response()->json(['status' => $status, 'log' => $logTail]);
     }
 
+    /**
+     * Return a list of migration files for the installer UI
+     */
+    public function listMigrations(Request $request)
+    {
+        try {
+            $files = glob(database_path('migrations') . DIRECTORY_SEPARATOR . '*.php');
+            natsort($files);
+            $migs = [];
+            foreach ($files as $f) {
+                $migs[] = ['name' => basename($f), 'status' => 'pending'];
+            }
+
+            // If there is an existing status file, merge statuses
+            $statusPath = storage_path('app/install_migrate_status.json');
+            if (file_exists($statusPath)) {
+                $raw = @file_get_contents($statusPath);
+                $decoded = json_decode($raw, true) ?: [];
+                if (isset($decoded['migrations']) && is_array($decoded['migrations'])) {
+                    $map = [];
+                    foreach ($decoded['migrations'] as $m) { $map[$m['name']] = $m['status'] ?? 'pending'; }
+                    foreach ($migs as $idx => $m) {
+                        if (isset($map[$m['name']])) $migs[$idx]['status'] = $map[$m['name']];
+                    }
+                }
+            }
+
+            return response()->json(['success' => true, 'migrations' => $migs]);
+        } catch (\Exception $e) {
+            try { \Illuminate\Support\Facades\Log::error('listMigrations failed', ['error' => $e->getMessage()]); } catch (\Exception $__e) {}
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function queueWorkOnce(Request $request)
+    {
+        try {
+            \Illuminate\Support\Facades\Log::info('queueWorkOnce called', ['ip' => $request->ip()]);
+        } catch (\Exception $__e) {}
+
+        try {
+            // Increase time limit for the request while the worker runs
+            @set_time_limit(300);
+            Artisan::call('queue:work', ['--once' => true, '--tries' => 1]);
+            $output = Artisan::output();
+            try { \Illuminate\Support\Facades\Log::info('queueWorkOnce output', ['output' => substr($output,0,2000)]); } catch (\Exception $__e) {}
+            return response()->json(['success' => true, 'message' => 'Worker run once', 'output' => $output]);
+        } catch (\Exception $e) {
+            try { \Illuminate\Support\Facades\Log::error('queueWorkOnce failed', ['error' => $e->getMessage()]); } catch (\Exception $__e) {}
+            return response()->json(['success' => false, 'message' => 'Failed to run worker: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function install(Request $request)
     {
         $data = $request->validate([
             'site_title' => 'nullable|string|max:255',
             'admin_name' => 'required|string|max:255',
+            'admin_username' => 'required|string|max:50',
             'admin_email' => 'required|email|max:255',
             'admin_password' => 'required|string|min:8|confirmed',
             // optionally accept DB details if users want to set it here
@@ -251,9 +300,16 @@ class InstallController extends Controller
             'db_password' => 'nullable|string',
         ]);
 
-        // Set site title if provided
+        // Set site title if provided.
+        // NOTE: Don't write site title to .env during install to avoid crashes caused by unescaped input.
+        // Apply a sanitized value to runtime config only (admin settings page can persist safely later).
         if (!empty($data['site_title'])) {
-            $this->setEnvValue('SITE_TITLE', $data['site_title']);
+            $cleanTitle = trim(preg_replace('/[\r\n]+/', ' ', $data['site_title']));
+            $cleanTitle = mb_substr($cleanTitle, 0, 255);
+            $cleanTitle = str_replace('"', '"', $cleanTitle); // ensure quotes are not raw
+            // Remove control characters
+            $cleanTitle = preg_replace('/[\x00-\x1F\x7F]/u', '', $cleanTitle);
+            config(['site.title' => $cleanTitle]);
         }
 
         // If APP_KEY missing, generate
@@ -275,26 +331,67 @@ class InstallController extends Controller
         try {
             Artisan::call('migrate', ['--force' => true]);
         } catch (\Exception $e) {
-            // ignore migration errors for now; we still want to mark installed so developer can fix DB
+            try { \Illuminate\Support\Facades\Log::warning('install: migrate failed', ['error' => $e->getMessage()]); } catch (\Exception $__e) {}
         }
 
-        // Create admin user if users table exists
+        // Create admin user if users table exists; attempt migration again if missing
         try {
-            if (Schema::hasTable('users')) {
-                $existing = DB::table('users')->where('email', $data['admin_email'])->first();
-                if (! $existing) {
-                    DB::table('users')->insert([
-                        'name' => $data['admin_name'],
-                        'email' => $data['admin_email'],
-                        'password' => Hash::make($data['admin_password']),
-                        'email_verified_at' => now(),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
+            if (! Schema::hasTable('users')) {
+                try {
+                    Artisan::call('migrate', ['--force' => true]);
+                } catch (\Exception $e) {
+                    try { \Illuminate\Support\Facades\Log::warning('install: second migrate attempt failed', ['error' => $e->getMessage()]); } catch (\Exception $__e) {}
                 }
             }
+
+            if (! Schema::hasTable('users')) {
+                return redirect()->back()->withErrors(['admin' => 'Users table not found after attempting migrations. Run migrations and retry.'])->withInput();
+            }
+
+            // Avoid creating duplicates by email or username
+            $existing = DB::table('users')
+                ->where('email', $data['admin_email'])
+                ->orWhere('username', $data['admin_username'])
+                ->first();
+
+            if (! $existing) {
+                // Split full name into fname, mname, lname
+                $parts = preg_split('/\s+/', trim($data['admin_name']));
+                $fname = array_shift($parts) ?? $data['admin_name'];
+                $lname = count($parts) ? array_pop($parts) : '';
+                $mname = count($parts) ? implode(' ', $parts) : null;
+
+                // Ensure SuperAdmin role exists and get its id
+                $roleId = \App\Models\Role::where('slug', 'superadmin')->value('id');
+                if (! $roleId) {
+                    try {
+                        $role = \App\Models\Role::create(['name' => 'SuperAdmin', 'slug' => 'superadmin', 'description' => 'System Super Administrator']);
+                        $roleId = $role->id;
+                    } catch (\Exception $__e) {
+                        $roleId = null; // proceed without role if creation fails
+                    }
+                }
+
+                DB::table('users')->insert([
+                    'fname' => $fname,
+                    'mname' => $mname,
+                    'lname' => $lname,
+                    'username' => $data['admin_username'],
+                    'email' => $data['admin_email'],
+                    'password' => Hash::make($data['admin_password']),
+                    'role_id' => $roleId,
+                    'email_verified_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                session()->flash('status', 'Admin user created successfully.');
+            } else {
+                session()->flash('status', 'Admin user already exists.');
+            }
         } catch (\Exception $e) {
-            // ignore user creation errors
+            try { \Illuminate\Support\Facades\Log::error('install: user creation failed', ['error' => $e->getMessage()]); } catch (\Exception $__e) {}
+            return redirect()->back()->withErrors(['admin' => 'Failed to create admin user: ' . $e->getMessage()])->withInput();
         }
 
         // Create installed lock file

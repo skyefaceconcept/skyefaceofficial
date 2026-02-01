@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Add notes column to repair_statuses table
-        if (!Schema::hasColumn('repair_statuses', 'notes')) {
+        // Add notes column to repair_statuses table only if the table exists
+        if (Schema::hasTable('repair_statuses') && ! Schema::hasColumn('repair_statuses', 'notes')) {
             Schema::table('repair_statuses', function (Blueprint $table) {
                 $table->text('notes')->nullable()->after('description');
             });
@@ -24,10 +24,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('repair_statuses', function (Blueprint $table) {
-            if (Schema::hasColumn('repair_statuses', 'notes')) {
+        if (Schema::hasTable('repair_statuses') && Schema::hasColumn('repair_statuses', 'notes')) {
+            Schema::table('repair_statuses', function (Blueprint $table) {
                 $table->dropColumn('notes');
-            }
-        });
+            });
+        }
     }
 };

@@ -88,8 +88,27 @@
                 const testBtn = document.getElementById('db-test-btn');
                 const message = document.getElementById('db-message');
                 const csrf = '{{ csrf_token() }}';
-                const dbTestUrl = '{{ route('install.dbtest') }}';
-                const dbCreateUrl = '{{ route('install.dbcreate') }}';
+                const dbTestUrl = '/install/db-test';
+                const dbCreateUrl = '/install/db-create';
+
+                // sendClientLog helper - posts client-side debug info to the server
+                async function sendClientLog(level, messageText, extra) {
+                    try {
+                        await fetch('/install/client-log', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrf,
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include',
+                            body: JSON.stringify({ level: level, message: messageText, extra: extra || {} })
+                        });
+                    } catch (e) {
+                        // ignore client logging failures
+                        console.warn('client log failed', e);
+                    }
+                }
 
                 // Helper to send form data to a route and return parsed JSON
                 async function postForm(url, btnElement, actionLabel) {
@@ -105,23 +124,35 @@
                                 'X-CSRF-TOKEN': csrf,
                                 'Accept': 'application/json'
                             },
-                            credentials: 'same-origin',
+                            credentials: 'include',
                             body: formData
                         });
+
+                        if (res.status === 419) {
+                            message.style.color = 'crimson';
+                            message.textContent = 'Session expired or CSRF token mismatch. Please reload the page and try again.';
+                            btnElement.disabled = false;
+                            sendClientLog('warn', 'CSRF mismatch on postForm', { url: url, status: 419 });
+                            return { success: false, message: message.textContent };
+                        }
+
                         const json = await res.json();
                         if (res.ok && json.success) {
                             message.style.color = 'green';
                             message.textContent = json.message;
+                            sendClientLog('info', actionLabel + ' success', { url: url });
                             return json;
                         } else {
                             message.style.color = 'crimson';
                             message.textContent = json.message || 'Unexpected response';
+                            sendClientLog('error', actionLabel + ' failed', { url: url, payload: json });
                             return json;
                         }
                     } catch (err) {
                         console.error('Installer request error', err);
                         message.style.color = 'crimson';
                         message.textContent = err.message || 'Request failed (see console)';
+                        sendClientLog('error', 'postForm exception', { url: url, error: '' + err });
                         return { success: false, message: err.message };
                     } finally {
                         btnElement.disabled = false;
@@ -129,6 +160,8 @@
                 }
 
                 createBtn.addEventListener('click', async (e) => {
+                    console.log('Create Database clicked');
+                    sendClientLog('info', 'Create Database clicked');
                     // Create the DB first
                     const result = await postForm(dbCreateUrl, createBtn, 'Creating database');
                     if (result && result.success) {
@@ -138,6 +171,8 @@
                 });
 
                 testBtn.addEventListener('click', async (e) => {
+                    console.log('Test Connection clicked (step 1)');
+                    sendClientLog('info', 'Test Connection clicked (step 1)');
                     const result = await postForm(dbTestUrl, testBtn, 'Testing connection');
                     if (result && result.success) {
                         message.textContent = result.message + '. Redirecting to migrate step...';
@@ -147,29 +182,21 @@
             </script>
         @endif
 
-        {{-- Step 2: Run migrations --}}
+        {{-- Step 2: Run migrations (clean minimal UI) --}}
         @if (($step ?? 1) === 2)
             <h3 style="margin-top:1.25rem">Database (summary)</h3>
             <p class="note">Host: <strong>{{ env('DB_HOST', '127.0.0.1') }}</strong>
             &nbsp;•&nbsp; DB: <strong>{{ env('DB_DATABASE', 'not set') }}</strong>
             &nbsp;•&nbsp; User: <strong>{{ env('DB_USERNAME', 'not set') }}</strong></p>
 
-            <form id="db-test-form">
-                @csrf
-                <input type="hidden" name="db_host" value="{{ env('DB_HOST', '') }}" />
-                <input type="hidden" name="db_port" value="{{ env('DB_PORT', '3306') }}" />
-                <input type="hidden" name="db_database" value="{{ env('DB_DATABASE', '') }}" />
-                <input type="hidden" name="db_username" value="{{ env('DB_USERNAME', '') }}" />
-                <input type="hidden" name="db_password" value="{{ env('DB_PASSWORD', '') }}" />
-            </form>
-
             <div style="display:flex;gap:0.5rem;align-items:center;margin-top:1rem">
-                <button id="run-migrations-btn" class="btn" type="button" onclick="(async function(){ const out=document.getElementById('migrate-output'); out.style.display='block'; out.style.color='black'; out.textContent='Pinging server before migration...'; try{ const res=await fetch('{{ route('install.ping') }}',{credentials:'same-origin'}); const j=await res.json(); out.textContent='Ping OK: '+JSON.stringify(j); }catch(e){ out.style.color='crimson'; out.textContent='Ping failed: '+e.message; } })()">Run Migrations</button>
-                <button id="migrate-test-btn" class="btn" type="button" style="background:#6b7280" onclick="(async function(){ const m=document.getElementById('db-message') || document.getElementById('migrate-output'); m.style.display='block'; m.style.color='black'; m.textContent='Pinging server for DB test...'; try{ const res=await fetch('{{ route('install.ping') }}',{credentials:'same-origin'}); const j=await res.json(); m.style.color='green'; m.textContent='Ping OK: '+JSON.stringify(j); }catch(e){ m.style.color='crimson'; m.textContent='Ping failed: '+e.message; } })()">Test Connection</button>
-                <a href="{{ url('/install?step=1') }}" class="btn" style="background:#e5e7eb;color:#111">Back</a>
+                <button id="run-migrations-btn" class="btn" type="button">Run Migrations</button>
+                <button id="run-queue-btn" class="btn" type="button" style="background:#8b5cf6;color:#fff;display:none">Run worker once</button>
+                <button id="installer-test-btn" class="btn" type="button" style="background:#06b6d4;color:#fff">Test Installer</button>
             </div>
 
             <div id="migrate-output" style="white-space:pre-wrap;background:#f3f4f6;border-radius:6px;padding:0.75rem;margin-top:1rem;display:none"></div>
+            <div id="installer-debug" style="display:none; white-space:pre-wrap; background:#111827; color:#e5e7eb; padding:0.75rem; border-radius:6px; margin-top:0.75rem; font-family:monospace; font-size:13px; max-height:220px; overflow:auto"></div>
 
             <div id="migration-list" style="margin-top:1rem;background:#fff;border:1px solid #e5e7eb;padding:0.75rem;border-radius:6px;display:none">
                 <strong>Migrations</strong>
@@ -185,187 +212,128 @@
             </style>
 
             <script>
-                const runBtn = document.getElementById('run-migrations-btn');
-                const testBtn2 = document.getElementById('migrate-test-btn');
-                const migrateOutput = document.getElementById('migrate-output');
-                const migrationList = document.getElementById('migration-list');
-                const migrationItems = document.getElementById('migration-items');
-                const testForm = document.getElementById('db-test-form');
-                const csrf2 = '{{ csrf_token() }}';
-                const dbMigrateUrl2 = '{{ route('install.dbmigrate') }}';
-                const dbTestUrl2 = '{{ route('install.dbtest') }}';
+                (function(){
+                    const csrf = '{{ csrf_token() }}';
+                    const queueDriver = '{{ config('queue.default') }}';
+                    const runBtn = document.getElementById('run-migrations-btn');
+                    const runQueueBtn = document.getElementById('run-queue-btn');
+                    const testBtn = document.getElementById('installer-test-btn');
+                    const migrateOutput = document.getElementById('migrate-output');
+                    const debugEl = document.getElementById('installer-debug');
+                    const migrationList = document.getElementById('migration-list');
+                    const migrationItems = document.getElementById('migration-items');
 
-                // Surface any JS errors to the installer UI for easier debugging
-                window.onerror = function(message, source, lineno, colno, error) {
-                    try {
-                        const out = document.getElementById('migrate-output') || document.getElementById('db-message');
-                        if (out) {
-                            out.style.display = 'block';
-                            out.style.color = 'crimson';
-                            out.textContent = 'JS Error: ' + message + ' at ' + source + ':' + lineno;
-                        }
-                    } catch (e) {}
-                    console.error('Installer window.onerror', message, source, lineno, colno, error);
-                };
+                    function showDebug(obj){ try { debugEl.style.display='block'; debugEl.textContent = JSON.stringify(obj, null, 2); debugEl.scrollTop = debugEl.scrollHeight; } catch(e) {} }
+                    function writeOutput(txt, color){ try { migrateOutput.style.display='block'; migrateOutput.style.color = color || 'black'; migrateOutput.textContent = txt; } catch(e){} }
 
-                function renderMigrations(migs) {
-                    migrationItems.innerHTML = '';
-                    if (!migs || !migs.length) {
-                        migrationList.style.display = 'none';
-                        return;
-                    }
-                    migrationList.style.display = 'block';
-                    for (const m of migs) {
-                        const li = document.createElement('li');
-                        li.className = 'mig-item mig-pending';
-                        li.setAttribute('data-name', m.name);
-                        li.innerHTML = `<span style="display:inline-block;width:70%">${m.name}</span><span style="float:right" class="mig-status">${m.status || 'pending'}</span>`;
-                        migrationItems.appendChild(li);
-                    }
-                }
-
-                function updateMigrationStatus(migs) {
-                    for (const m of migs) {
-                        const el = migrationItems.querySelector(`[data-name='${m.name}']`);
-                        if (!el) continue;
-                        const statusEl = el.querySelector('.mig-status');
-                        statusEl.textContent = m.status || 'pending';
-                        el.classList.remove('mig-pending','mig-running','mig-done','mig-failed');
-                        if ((m.status || '') === 'done') el.classList.add('mig-done');
-                        else if ((m.status || '') === 'failed') el.classList.add('mig-failed');
-                        else if ((m.status || '') === 'running') el.classList.add('mig-running');
-                        else el.classList.add('mig-pending');
-                    }
-                }
-
-                async function postFormFromElement(url, formElement, btnEl, actionLabel) {
-                    migrateOutput.style.color = 'black';
-                    migrateOutput.style.display = 'block';
-                    migrateOutput.textContent = actionLabel + '...\n';
-                    btnEl.disabled = true;
-                    const formData = new FormData(formElement);
-                    try {
-                        const res = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'X-CSRF-TOKEN': csrf2, 'Accept': 'application/json' },
-                            credentials: 'same-origin',
-                            body: formData
-                        });
-                        let json;
-                        if (!res.ok) {
-                            const txt = await res.text();
-                            try { json = JSON.parse(txt); } catch (e) { json = { success: false, message: 'Server error: ' + res.status + ' - ' + txt }; }
-                        } else {
-                            json = await res.json();
-                        }
-                        if (res.ok && json.success) {
-                            migrateOutput.style.color = 'green';
-                            migrateOutput.textContent += json.output || json.message || 'Success';
-                            return json;
-                        } else {
-                            migrateOutput.style.color = 'crimson';
-                            migrateOutput.textContent += json.message || 'Error';
-                            return json;
-                        }
-                    } catch (err) {
-                        migrateOutput.style.color = 'crimson';
-                        migrateOutput.textContent += (err.message || 'Request failed');
-                        return { success: false, message: err.message };
-                    } finally {
-                        btnEl.disabled = false;
-                    }
-                }
-
-                runBtn.addEventListener('click', async () => {
-                    // Start a background migration and poll status until completion
-                    migrateOutput.style.display = 'block';
-                    migrateOutput.style.color = 'black';
-                    migrateOutput.textContent = 'Starting background migration...\n';
-                    runBtn.disabled = true;
-
-                    try {
-                        const res = await fetch('{{ route('install.dbmigrate_start') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf2, 'Accept': 'application/json' }, credentials: 'same-origin' });
-                        let json;
-                        if (!res.ok) {
-                            // Try to show server response body for easier debugging
-                            let txt = await res.text();
-                            try {
-                                json = JSON.parse(txt);
-                            } catch (e) {
-                                migrateOutput.style.color = 'crimson';
-                                migrateOutput.textContent += 'Server responded: ' + res.status + ' - ' + txt;
-                                runBtn.disabled = false;
-                                return;
-                            }
-                        } else {
-                            json = await res.json();
-                        }
-
-                        if (!json.success) {
-                            migrateOutput.style.color = 'crimson';
-                            migrateOutput.textContent += (json.message || 'Failed to start migration');
-                            runBtn.disabled = false;
-                            return;
-                        }
-
-                        // Poll status endpoint until done/error
-                        const poll = async () => {
-                            const sres = await fetch('{{ route('install.dbmigrate_status') }}', { method: 'GET', headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
-                            const sjson = await sres.json();
-                            const status = sjson.status || {};
-                            migrateOutput.textContent = '';
-                            if (sjson.log) migrateOutput.textContent += sjson.log + '\n';
-
-                            // Render or update migration list
-                            const migs = status.migrations || status.migrations === undefined ? status.migrations : null;
-                            if (migs) {
-                                // first time render if not present
-                                if (migrationItems.children.length === 0) {
-                                    renderMigrations(migs);
+                    async function loadMigrationList(){
+                        try {
+                            const res = await fetch('/install/list-migrations', { method: 'GET', headers: { 'Accept': 'application/json' }, credentials: 'include' });
+                            if (!res.ok) { writeOutput('Failed to load migration list: ' + res.status, 'crimson'); return; }
+                            const data = await res.json();
+                            if (data && data.migrations && data.migrations.length){
+                                migrationItems.innerHTML = '';
+                                for (const m of data.migrations){
+                                    const li = document.createElement('li');
+                                    li.className = 'mig-item mig-pending';
+                                    li.setAttribute('data-name', m.name);
+                                    li.innerHTML = `<span style="display:inline-block;width:70%">${m.name}</span><span style="float:right" class="mig-status">${m.status || 'pending'}</span>`;
+                                    migrationItems.appendChild(li);
                                 }
-                                updateMigrationStatus(migs);
-                            }
-
-                            migrateOutput.textContent += '\nStatus: ' + (status.status || 'unknown');
-
-                            if (status.status === 'running') {
-                                setTimeout(poll, 1500);
-                            } else if (status.status === 'done') {
-                                migrateOutput.style.color = 'green';
-                                migrateOutput.textContent += '\nMigration completed successfully.';
-                                // enable test and auto-run it
-                                testBtn2.disabled = false;
-                                const test = await postFormFromElement(dbTestUrl2, testForm, testBtn2, 'Testing connection');
-                                if (test && test.success) {
-                                    setTimeout(() => { window.location = '{{ url('/install?step=3') }}'; }, 800);
-                                }
-                                runBtn.disabled = false;
-                            } else if (status.status === 'error') {
-                                migrateOutput.style.color = 'crimson';
-                                migrateOutput.textContent += '\nMigration failed: ' + (status.message || 'See log for details');
-                                runBtn.disabled = false;
+                                migrationList.style.display = 'block';
                             } else {
-                                runBtn.disabled = false;
+                                migrationList.style.display = 'none';
+                                writeOutput('No migration files found', 'crimson');
                             }
-                        };
-
-                        setTimeout(poll, 1000);
-                    } catch (err) {
-                        console.error('Migration start error', err);
-                        migrateOutput.style.color = 'crimson';
-                        migrateOutput.textContent += '\n' + (err.message || 'Request failed (see console)');
-                        runBtn.disabled = false;
+                        } catch (e) { writeOutput('Error loading migration list: ' + (e.message || e), 'crimson'); }
                     }
-                });
 
-                testBtn2.addEventListener('click', async () => {
-                    const test = await postFormFromElement(dbTestUrl2, testForm, testBtn2, 'Testing connection');
-                    if (test && test.success) {
-                        setTimeout(() => { window.location = '{{ url('/install?step=3') }}'; }, 800);
+                    function updateMigrationStatus(migs){
+                        for (const m of (migs || [])){
+                            const el = migrationItems.querySelector(`[data-name='${m.name}']`);
+                            if (!el) continue;
+                            const statusEl = el.querySelector('.mig-status');
+                            const s = (m.status || 'pending').toLowerCase();
+                            const labelMap = { done: 'Done', failed: 'Failed', running: 'Running', pending: 'Pending' };
+                            statusEl.textContent = labelMap[s] || s;
+                            el.classList.remove('mig-pending','mig-running','mig-done','mig-failed');
+                            if (s === 'done') el.classList.add('mig-done');
+                            else if (s === 'failed') el.classList.add('mig-failed');
+                            else if (s === 'running') el.classList.add('mig-running');
+                            else el.classList.add('mig-pending');
+                        }
                     }
-                });
-            </div>
+
+                    // Start migration (POST then poll)
+                    async function startMigrations(){
+                        try {
+                            writeOutput('Starting migrations...', 'black');
+                            runBtn.disabled = true;
+                            const res = await fetch('/install/db-migrate-start', { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }, credentials: 'include' });
+                            const txt = await res.text();
+                            let json; try { json = JSON.parse(txt); } catch(e){ json = { success:false, message: txt }; }
+                            showDebug(json);
+                            if (!json.success){ writeOutput('Failed to start migrations: ' + (json.message || 'server error'), 'crimson'); runBtn.disabled = false; return; }
+
+                            writeOutput('Migrations queued. Polling status...', 'black');
+
+                            // Show queue button if needed
+                            if (runQueueBtn) { if (json.queue_driver && json.queue_driver !== 'sync') runQueueBtn.style.display = 'inline-block'; }
+
+                            const poll = async () => {
+                                try {
+                                    const sres = await fetch('/install/db-migrate-status', { credentials: 'include' });
+                                    if (!sres.ok) { writeOutput('Failed to fetch status: ' + sres.status, 'crimson'); runBtn.disabled = false; return; }
+                                    const sjson = await sres.json();
+                                    if (sjson.log) writeOutput(sjson.log, 'black');
+                                    if (sjson.status && sjson.status.migrations) updateMigrationStatus(sjson.status.migrations);
+                                    const st = sjson.status && sjson.status.status;
+                                    if (st === 'running') { setTimeout(poll, 1500); }
+                                    else if (st === 'done') { writeOutput('Migration completed successfully', 'green'); runBtn.disabled = false; }
+                                    else if (st === 'error') { writeOutput('Migration finished with errors. See debug panel.', 'crimson'); showDebug(sjson); runBtn.disabled = false; }
+                                    else { runBtn.disabled = false; }
+                                } catch (e) { writeOutput('Error polling status: ' + (e.message || e), 'crimson'); runBtn.disabled = false; }
+                            };
+
+                            setTimeout(poll, 800);
+                        } catch (e) { writeOutput('Start migrations error: ' + (e.message || e), 'crimson'); runBtn.disabled = false; }
+                    }
+
+                    // Run single worker once
+                    async function runWorkerOnce(){
+                        try { runQueueBtn.disabled = true; writeOutput('Running queue worker...', 'black');
+                            const res = await fetch('/install/queue-work-once', { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }, credentials: 'include' });
+                            const json = await res.json(); showDebug(json);
+                            if (json && json.success) writeOutput('Worker executed', 'green'); else writeOutput('Worker failed: ' + (json.message || ''), 'crimson');
+                        } catch (e) { writeOutput('Queue worker error: ' + (e.message || e), 'crimson'); } finally { runQueueBtn.disabled = false; }
+                    }
+
+                    // Simple installer health checks
+                    async function runInstallerTest(){
+                        try { testBtn.disabled = true; writeOutput('Running checks...', 'black');
+                            const [ping, status, dbTest] = await Promise.all([ fetch('/install/ping', { credentials: 'include' }), fetch('/install/db-migrate-status', { credentials: 'include', headers: { 'Accept': 'application/json' } }), fetch('/install/debug-test', { credentials: 'include', headers: { 'Accept': 'application/json' } }) ]);
+                            const pingJson = await ping.json(); showDebug({ ping: pingJson });
+                            const statusJson = await status.json(); if (statusJson.log) writeOutput(statusJson.log, 'black'); if (statusJson.status && statusJson.status.migrations) updateMigrationStatus(statusJson.status.migrations);
+                            const dbJson = await dbTest.json(); showDebug(Object.assign({}, debugEl ? JSON.parse(debugEl.textContent || '{}') : {}, { db_test: dbJson }));
+                            writeOutput('Checks completed', 'black');
+                        } catch (e) { writeOutput('Installer checks failed: ' + (e.message || e), 'crimson'); } finally { testBtn.disabled = false; }
+                    }
+
+                    // Attach handlers and init
+                    runBtn.addEventListener('click', startMigrations);
+                    if (runQueueBtn) runQueueBtn.addEventListener('click', runWorkerOnce);
+                    if (testBtn) testBtn.addEventListener('click', runInstallerTest);
+
+                    // Show run queue button only if queue is not sync
+                    try { if (queueDriver && queueDriver !== 'sync' && runQueueBtn) runQueueBtn.style.display = 'inline-block'; } catch (e) {}
+
+                    // initial load
+                    setTimeout(loadMigrationList, 120);
+                })();
+            </script>
         @endif
+
+            </div>
 
         {{-- Step 3: Admin account and finalize --}}
         @if (($step ?? 1) === 3)
@@ -379,10 +347,14 @@
 
                 <label for="site_title">Site Title (optional)</label>
                 <input id="site_title" name="site_title" value="{{ old('site_title', config('app.name')) }}" />
+                <p class="note" style="margin-top:0.25rem">(Note: Title will be applied for this install session; you can save it permanently later from Admin → Settings to avoid .env issues.)</p>
 
                 <h3 style="margin-top:1.5rem">Admin Account</h3>
                 <label for="admin_name">Full name</label>
                 <input id="admin_name" name="admin_name" value="{{ old('admin_name') }}" required />
+
+                <label for="admin_username">Username</label>
+                <input id="admin_username" name="admin_username" value="{{ old('admin_username') }}" required placeholder="alphanumeric, underscores allowed" />
 
                 <label for="admin_email">Email</label>
                 <input id="admin_email" name="admin_email" type="email" value="{{ old('admin_email') }}" required />
@@ -409,6 +381,7 @@
             </form>
 
             <p class="note" style="margin-top:1rem">After installation, you can login using the admin user you created and finish configuration.</p>
+            <p class="note" style="margin-top:0.5rem"><strong>Note:</strong> The account created will be assigned the <strong>SuperAdmin</strong> role (full access). Use the <strong>username</strong> and email to sign in.</p>
         @endif
     </div>
 </body>

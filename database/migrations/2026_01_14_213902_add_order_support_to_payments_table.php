@@ -11,10 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Columns already merged into create_payments_table — no-op if present
+        if (Schema::hasTable('payments') && Schema::hasColumn('payments', 'order_id') && Schema::hasColumn('payments', 'transaction_reference')) {
+            return;
+        }
+
         Schema::table('payments', function (Blueprint $table) {
-            // Add missing columns for order payments
+            // Add missing columns for order payments if they don't exist
             if (!Schema::hasColumn('payments', 'order_id')) {
-                $table->foreignId('order_id')->nullable()->after('repair_id')->constrained('orders')->onDelete('cascade');
+                $table->unsignedBigInteger('order_id')->nullable()->index();
+                // add FK later when orders table exists
             }
             if (!Schema::hasColumn('payments', 'processor')) {
                 $table->string('processor')->nullable()->after('currency');

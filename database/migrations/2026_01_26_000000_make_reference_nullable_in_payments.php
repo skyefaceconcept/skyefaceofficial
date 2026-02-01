@@ -11,14 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('payments', function (Blueprint $table) {
-            // Make reference nullable and drop the unique constraint
-            // Attempt to drop index by name if it exists
+        // Make reference nullable and drop the unique constraint if it exists
+        $hasIndex = \Illuminate\Support\Facades\DB::select("SHOW INDEX FROM payments WHERE Column_name = 'reference'");
+        if (! empty($hasIndex)) {
             try {
-                $table->dropIndex(['reference']);
+                Schema::table('payments', function (Blueprint $table) {
+                    $table->dropIndex(['reference']);
+                });
             } catch (\Exception $e) {
-                // index may not exist; ignore
+                // ignore if we couldn't drop the index
             }
+        }
+
+        Schema::table('payments', function (Blueprint $table) {
             $table->string('reference')->nullable()->change();
         });
     }
