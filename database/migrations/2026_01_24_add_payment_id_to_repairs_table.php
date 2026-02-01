@@ -15,7 +15,14 @@ return new class extends Migration
             // Add payment_id column to link repairs to payment records
             if (!Schema::hasColumn('repairs', 'payment_id')) {
                 $table->unsignedBigInteger('payment_id')->nullable()->after('payment_processor');
-                $table->foreign('payment_id')->references('id')->on('payments')->onDelete('set null');
+                // Add foreign key only when payments table exists to avoid ordering issues
+                if (Schema::hasTable('payments')) {
+                    try {
+                        $table->foreign('payment_id')->references('id')->on('payments')->onDelete('set null');
+                    } catch (\Exception $e) {
+                        // ignore FK creation failures (partial migration ordering)
+                    }
+                }
             }
         });
     }
