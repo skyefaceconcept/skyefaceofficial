@@ -74,10 +74,20 @@
 
                 <div id="db-message" style="margin-top:1rem"></div>
 
+                <div style="margin-top:1rem">
+                    <label><input type="checkbox" id="persist" name="persist" checked /> Save DB settings to <code>.env</code></label>
+                </div>
+
+                <div style="margin-top:0.5rem">
+                    <label><input type="checkbox" id="run_migrations" name="run_migrations" checked /> Run migrations after create</label>
+                </div>
+
                 <div style="display:flex;gap:0.5rem;align-items:center;margin-top:1rem">
                     <button id="db-create-btn" class="btn" type="button">Create Database</button>
                     <button id="db-test-btn" class="btn" type="button" style="background:#6b7280">Test Connection</button>
                 </div>
+
+                <div id="migrate-output" style="white-space:pre-wrap;background:#f3f4f6;border-radius:6px;padding:0.75rem;margin-top:1rem;display:none"></div>
             </form>
 
             <script>
@@ -88,6 +98,7 @@
                 const csrf = '{{ csrf_token() }}';
                 const dbTestUrl = '{{ route('install.dbtest') }}';
                 const dbCreateUrl = '{{ route('install.dbcreate') }}';
+                const dbMigrateUrl = '{{ route('install.dbmigrate') }}';
 
                 // Helper to send form data to a route and return parsed JSON
                 async function postForm(url, btnElement, actionLabel) {
@@ -125,11 +136,32 @@
                 }
 
                 createBtn.addEventListener('click', async (e) => {
+                    // Create the DB first
                     const result = await postForm(dbCreateUrl, createBtn, 'Creating database');
                     if (result && result.success) {
-                        // When create succeeds, enable test button and auto-run test for convenience
                         testBtn.style.background = '#111827';
-                        testBtn.click();
+
+                        // If user wants migrations run, do that first
+                        const runMigrations = document.getElementById('run_migrations').checked;
+                        if (runMigrations) {
+                            const migrateArea = document.getElementById('migrate-output');
+                            migrateArea.style.display = 'block';
+                            migrateArea.textContent = 'Running migrations...\n';
+
+                            // call migration endpoint
+                            const mig = await postForm(dbMigrateUrl, createBtn, 'Running migrations');
+                            if (mig && mig.success) {
+                                migrateArea.textContent += mig.output || 'Migrations ran successfully';
+                                // After migrations succeed, proceed to test connection
+                                testBtn.click();
+                            } else {
+                                migrateArea.textContent += mig.message || 'Migration failed';
+                                return; // stop here so user can inspect migration error
+                            }
+                        } else {
+                            // if not running migrations, auto-run test
+                            testBtn.click();
+                        }
                     }
                 });
 

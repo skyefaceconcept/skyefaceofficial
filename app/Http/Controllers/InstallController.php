@@ -61,6 +61,40 @@ class InstallController extends Controller
         }
     }
 
+    /**
+     * Run migrations using currently configured database env values.
+     */
+    public function dbMigrate(Request $request)
+    {
+        // Ensure runtime DB config is using latest env values
+        $connection = config('database.default');
+        config([
+            "database.connections.{$connection}.host" => env('DB_HOST'),
+            "database.connections.{$connection}.port" => env('DB_PORT'),
+            "database.connections.{$connection}.database" => env('DB_DATABASE'),
+            "database.connections.{$connection}.username" => env('DB_USERNAME'),
+            "database.connections.{$connection}.password" => env('DB_PASSWORD'),
+        ]);
+
+        // Purge and reconnect so the new config is used
+        try {
+            // Purge and reconnect the DB connection
+            DB::purge($connection);
+            DB::reconnect($connection);
+
+            // Clear config cache to be safe
+            Artisan::call('config:clear');
+
+            // Run migrations
+            Artisan::call('migrate', ['--force' => true]);
+            $output = Artisan::output();
+
+            return response()->json(['success' => true, 'message' => 'Migrations ran successfully', 'output' => $output]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'output' => $e->getTraceAsString() ?? ''], 422);
+        }
+    }
+
     public function dbTest(\Illuminate\Http\Request $request)
     {
         $data = $request->validate([
