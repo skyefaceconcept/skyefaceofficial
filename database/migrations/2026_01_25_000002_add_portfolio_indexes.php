@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Ensure table exists before altering indexes
+        if (!Schema::hasTable('portfolios')) {
+            return;
+        }
+
         Schema::table('portfolios', function (Blueprint $table) {
             // Add indexes if they don't exist
             if (!Schema::hasIndex('portfolios', 'portfolios_status_index')) {

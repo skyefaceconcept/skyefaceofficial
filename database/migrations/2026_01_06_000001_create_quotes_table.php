@@ -16,6 +16,12 @@ return new class extends Migration {
             $table->text('details')->nullable();
             $table->string('status')->default('new');
             $table->boolean('notified')->default(false);
+            // Enhanced quote management fields (merged from enhance_quotes migration)
+            $table->string('ip_address')->nullable()->after('notified');
+            $table->text('admin_notes')->nullable()->after('ip_address');
+            $table->decimal('quoted_price', 10, 2)->nullable()->after('admin_notes');
+            $table->text('response')->nullable()->after('quoted_price');
+            $table->timestamp('responded_at')->nullable()->after('response');
             $table->timestamps();
         });
     }

@@ -22,10 +22,17 @@ return new class extends Migration
             $table->string('thumbnail')->nullable();
             $table->integer('view_count')->default(0);
             $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
+            // Festive discount fields (merged from add migration)
+            $table->boolean('festive_discount_enabled')->default(false);
+            $table->decimal('festive_discount_percentage', 5, 2)->default(0);
             $table->timestamps();
 
             $table->index('category');
             $table->index('status');
+            $table->index('view_count');
+            $table->index('created_at');
+            // Full-text search for fresh installs
+            $table->fullText(['title', 'description']);
         });
     }
 

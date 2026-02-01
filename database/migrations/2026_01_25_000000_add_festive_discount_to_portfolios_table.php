@@ -11,10 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('portfolios', function (Blueprint $table) {
-            $table->boolean('festive_discount_enabled')->default(false)->after('status');
-            $table->decimal('festive_discount_percentage', 5, 2)->default(0)->after('festive_discount_enabled');
-        });
+        // Only add columns when table exists and column does not already exist
+        if (!Schema::hasTable('portfolios')) {
+            return;
+        }
+
+        if (!Schema::hasColumn('portfolios', 'festive_discount_enabled')) {
+            Schema::table('portfolios', function (Blueprint $table) {
+                $table->boolean('festive_discount_enabled')->default(false)->after('status');
+            });
+        }
+
+        if (!Schema::hasColumn('portfolios', 'festive_discount_percentage')) {
+            Schema::table('portfolios', function (Blueprint $table) {
+                $table->decimal('festive_discount_percentage', 5, 2)->default(0)->after('festive_discount_enabled');
+            });
+        }
     }
 
     /**
