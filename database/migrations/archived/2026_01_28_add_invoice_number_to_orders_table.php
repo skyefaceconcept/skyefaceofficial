@@ -11,8 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Already merged into create_orders_table — no-op if column exists
+        if (Schema::hasTable('orders') && Schema::hasColumn('orders', 'invoice_number')) {
+            return;
+        }
+
         Schema::table('orders', function (Blueprint $table) {
-            $table->enum('license_duration', ['6months', '1year', '2years'])->after('status')->default('1year');
+            // Add invoice_number as a unique, indexed column
+            if (! Schema::hasColumn('orders', 'invoice_number')) {
+                $table->string('invoice_number')->after('id')->unique()->nullable();
+            }
         });
     }
 
@@ -22,7 +30,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn('license_duration');
+            $table->dropColumn('invoice_number');
         });
     }
 };

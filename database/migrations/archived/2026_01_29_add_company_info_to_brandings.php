@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Already merged into create_brandings_table — no-op if brandings have company info
+        if (Schema::hasTable('brandings') && Schema::hasColumn('brandings', 'company_name') && Schema::hasColumn('brandings', 'cac_number') && Schema::hasColumn('brandings', 'rc_number')) {
+            return;
+        }
+
         Schema::table('brandings', function (Blueprint $table) {
             if (!Schema::hasColumn('brandings', 'company_name')) {
                 $table->string('company_name')->nullable();

@@ -11,12 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('payments', function (Blueprint $table) {
-            // Make customer_name nullable
-            if (Schema::hasColumn('payments', 'customer_name')) {
-                $table->string('customer_name')->nullable()->change();
-            }
-        });
+        // Already part of the payments create migration (customer_name is nullable). No-op.
+        if (Schema::hasTable('payments') && Schema::hasColumn('payments', 'customer_name')) {
+            return;
+        }
     }
 
     /**

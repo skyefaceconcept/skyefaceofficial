@@ -11,8 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Already merged into create_orders_table — no-op if column exists
+        if (Schema::hasTable('orders') && Schema::hasColumn('orders', 'billing_address_id')) {
+            return;
+        }
+
         Schema::table('orders', function (Blueprint $table) {
-            $table->foreignId('billing_address_id')->nullable()->after('user_id')->constrained('billing_addresses')->cascadeOnDelete();
+            if (! Schema::hasColumn('orders', 'billing_address_id')) {
+                $table->unsignedBigInteger('billing_address_id')->nullable()->index();
+                // FK will be created later when billing_addresses exists
+            }
         });
     }
 

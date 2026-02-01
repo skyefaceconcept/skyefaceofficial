@@ -11,8 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Already merged into create_payments_table — no-op if column exists
+        if (Schema::hasTable('payments') && Schema::hasColumn('payments', 'repair_id')) {
+            return;
+        }
+
         Schema::table('payments', function (Blueprint $table) {
-            $table->foreignId('repair_id')->nullable()->constrained('repairs')->onDelete('cascade');
+            if (! Schema::hasColumn('payments', 'repair_id')) {
+                $table->unsignedBigInteger('repair_id')->nullable()->index();
+                // add FK later when repairs table exists
+            }
         });
     }
 

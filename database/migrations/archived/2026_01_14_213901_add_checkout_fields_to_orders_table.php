@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Already merged into create_orders_table — no-op if fields exist
+        if (Schema::hasTable('orders') && Schema::hasColumn('orders', 'address') && Schema::hasColumn('orders', 'cart_items')) {
+            return;
+        }
+
         Schema::table('orders', function (Blueprint $table) {
             // Add missing columns for checkout
             if (!Schema::hasColumn('orders', 'address')) {
@@ -38,7 +43,7 @@ return new class extends Migration
                 $table->json('cart_items')->nullable()->after('transaction_reference');
             }
             if (!Schema::hasColumn('orders', 'license_duration')) {
-                $table->string('license_duration')->nullable()->after('amount');
+                $table->enum('license_duration', ['6months', '1year', '2years'])->after('status')->default('1year');
             }
         });
     }
