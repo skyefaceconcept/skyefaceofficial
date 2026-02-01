@@ -31,6 +31,8 @@ if (! file_exists(storage_path('app/installed'))) {
     Route::post('/install', [InstallController::class, 'install'])->name('install.post');
     Route::post('/install/db-create', [InstallController::class, 'dbCreate'])->name('install.dbcreate');
     Route::post('/install/db-migrate', [InstallController::class, 'dbMigrate'])->name('install.dbmigrate');
+    Route::post('/install/db-migrate-start', [InstallController::class, 'dbMigrateStart'])->name('install.dbmigrate_start');
+    Route::get('/install/db-migrate-status', [InstallController::class, 'dbMigrateStatus'])->name('install.dbmigrate_status');
     Route::post('/install/db-test', [InstallController::class, 'dbTest'])->name('install.dbtest');
 
     // Redirect everything else to the installer, but allow common endpoints used

@@ -210,15 +210,57 @@
                 }
 
                 runBtn.addEventListener('click', async () => {
-                    const mig = await postFormFromElement(dbMigrateUrl2, testForm, runBtn, 'Running migrations');
-                    if (mig && mig.success) {
-                        // enable test and auto-run it
-                        testBtn2.disabled = false;
-                        const test = await postFormFromElement(dbTestUrl2, testForm, testBtn2, 'Testing connection');
-                        if (test && test.success) {
-                            // redirect to admin step
-                            setTimeout(() => { window.location = '{{ url('/install?step=3') }}'; }, 800);
+                    // Start a background migration and poll status until completion
+                    migrateOutput.style.display = 'block';
+                    migrateOutput.style.color = 'black';
+                    migrateOutput.textContent = 'Starting background migration...\n';
+                    runBtn.disabled = true;
+
+                    try {
+                        const res = await fetch('{{ route('install.dbmigrate_start') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf2, 'Accept': 'application/json' } });
+                        const json = await res.json();
+                        if (!res.ok || !json.success) {
+                            migrateOutput.style.color = 'crimson';
+                            migrateOutput.textContent += (json.message || 'Failed to start migration');
+                            runBtn.disabled = false;
+                            return;
                         }
+
+                        // Poll status endpoint until done/error
+                        const poll = async () => {
+                            const sres = await fetch('{{ route('install.dbmigrate_status') }}', { method: 'GET', headers: { 'Accept': 'application/json' } });
+                            const sjson = await sres.json();
+                            const status = sjson.status || {};
+                            migrateOutput.textContent = '';
+                            if (sjson.log) migrateOutput.textContent += sjson.log + '\n';
+                            migrateOutput.textContent += '\nStatus: ' + (status.status || 'unknown');
+
+                            if (status.status === 'running') {
+                                setTimeout(poll, 1500);
+                            } else if (status.status === 'done') {
+                                migrateOutput.style.color = 'green';
+                                migrateOutput.textContent += '\nMigration completed successfully.';
+                                // enable test and auto-run it
+                                testBtn2.disabled = false;
+                                const test = await postFormFromElement(dbTestUrl2, testForm, testBtn2, 'Testing connection');
+                                if (test && test.success) {
+                                    setTimeout(() => { window.location = '{{ url('/install?step=3') }}'; }, 800);
+                                }
+                                runBtn.disabled = false;
+                            } else if (status.status === 'error') {
+                                migrateOutput.style.color = 'crimson';
+                                migrateOutput.textContent += '\nMigration failed: ' + (status.message || 'See log for details');
+                                runBtn.disabled = false;
+                            } else {
+                                runBtn.disabled = false;
+                            }
+                        };
+
+                        setTimeout(poll, 1000);
+                    } catch (err) {
+                        migrateOutput.style.color = 'crimson';
+                        migrateOutput.textContent += '\n' + (err.message || 'Request failed');
+                        runBtn.disabled = false;
                     }
                 });
 

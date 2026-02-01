@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Symfony\Component\Process\Process;
 
 class InstallController extends Controller
 {
@@ -85,7 +86,7 @@ class InstallController extends Controller
             // Clear config cache to be safe
             Artisan::call('config:clear');
 
-            // Run migrations
+            // Run migrations (synchronous fallback)
             Artisan::call('migrate', ['--force' => true]);
             $output = Artisan::output();
 
@@ -135,6 +136,64 @@ class InstallController extends Controller
         } catch (\PDOException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
+    }
+
+    public function dbMigrateStart(Request $request)
+    {
+        // Update runtime DB config as in dbMigrate
+        $connection = config('database.default');
+        config([
+            "database.connections.{$connection}.host" => env('DB_HOST'),
+            "database.connections.{$connection}.port" => env('DB_PORT'),
+            "database.connections.{$connection}.database" => env('DB_DATABASE'),
+            "database.connections.{$connection}.username" => env('DB_USERNAME'),
+            "database.connections.{$connection}.password" => env('DB_PASSWORD'),
+        ]);
+
+        try {
+            DB::purge($connection);
+            DB::reconnect($connection);
+            Artisan::call('config:clear');
+        } catch (\Exception $e) {
+            // ignore connectivity errors here — status endpoint will report
+        }
+
+        // Start the background artisan command which will update status file
+        $cmd = ['php', base_path('artisan'), 'install:migrate-start'];
+        $process = new Process($cmd, base_path());
+
+        try {
+            $process->start();
+            return response()->json(['success' => true, 'message' => 'Migration started']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to start background migration: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function dbMigrateStatus(Request $request)
+    {
+        $statusPath = storage_path('app/install_migrate_status.json');
+        $logPath = storage_path('logs/install-migrate.log');
+        $status = ['status' => 'unknown'];
+
+        if (file_exists($statusPath)) {
+            $raw = @file_get_contents($statusPath);
+            if ($raw) {
+                $decoded = json_decode($raw, true);
+                if (is_array($decoded)) {
+                    $status = $decoded;
+                }
+            }
+        }
+
+        // Read tail of log
+        $logTail = null;
+        if (file_exists($logPath)) {
+            $contents = file_get_contents($logPath);
+            $logTail = substr($contents, -4000);
+        }
+
+        return response()->json(['status' => $status, 'log' => $logTail]);
     }
 
     public function install(Request $request)
