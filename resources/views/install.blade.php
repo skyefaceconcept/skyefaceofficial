@@ -25,7 +25,9 @@
             <span style="margin-left: .5rem;">
                 <a href="{{ url('/install?step=1') }}" style="text-decoration: none; color: {{ ($step ?? 1) === 1 ? '#111827' : '#6b7280' }}">1. Database</a>
                 &nbsp;•&nbsp;
-                <a href="{{ url('/install?step=2') }}" style="text-decoration: none; color: {{ ($step ?? 1) === 2 ? '#111827' : '#6b7280' }}">2. Admin</a>
+                <a href="{{ url('/install?step=2') }}" style="text-decoration: none; color: {{ ($step ?? 1) === 2 ? '#111827' : '#6b7280' }}">2. Migrate</a>
+                &nbsp;•&nbsp;
+                <a href="{{ url('/install?step=3') }}" style="text-decoration: none; color: {{ ($step ?? 1) === 3 ? '#111827' : '#6b7280' }}">3. Admin</a>
             </span>
         </nav>
 
@@ -41,7 +43,7 @@
 
         {{-- Step 1: Database setup --}}
         @if (($step ?? 1) === 1)
-            <form id="db-form" method="post" action="{{ route('install.dbtest') }}">
+            <form id="db-form" method="post" action="{{ route('install.dbcreate') }}">
                 @csrf
                 <label for="db_host">DB Host</label>
                 <input id="db_host" name="db_host" value="{{ old('db_host', env('DB_HOST', '127.0.0.1')) }}" required />
@@ -74,20 +76,10 @@
 
                 <div id="db-message" style="margin-top:1rem"></div>
 
-                <div style="margin-top:1rem">
-                    <label><input type="checkbox" id="persist" name="persist" checked /> Save DB settings to <code>.env</code></label>
-                </div>
-
-                <div style="margin-top:0.5rem">
-                    <label><input type="checkbox" id="run_migrations" name="run_migrations" checked /> Run migrations after create</label>
-                </div>
-
                 <div style="display:flex;gap:0.5rem;align-items:center;margin-top:1rem">
                     <button id="db-create-btn" class="btn" type="button">Create Database</button>
                     <button id="db-test-btn" class="btn" type="button" style="background:#6b7280">Test Connection</button>
                 </div>
-
-                <div id="migrate-output" style="white-space:pre-wrap;background:#f3f4f6;border-radius:6px;padding:0.75rem;margin-top:1rem;display:none"></div>
             </form>
 
             <script>
@@ -98,7 +90,6 @@
                 const csrf = '{{ csrf_token() }}';
                 const dbTestUrl = '{{ route('install.dbtest') }}';
                 const dbCreateUrl = '{{ route('install.dbcreate') }}';
-                const dbMigrateUrl = '{{ route('install.dbmigrate') }}';
 
                 // Helper to send form data to a route and return parsed JSON
                 async function postForm(url, btnElement, actionLabel) {
@@ -139,44 +130,109 @@
                     // Create the DB first
                     const result = await postForm(dbCreateUrl, createBtn, 'Creating database');
                     if (result && result.success) {
-                        testBtn.style.background = '#111827';
-
-                        // If user wants migrations run, do that first
-                        const runMigrations = document.getElementById('run_migrations').checked;
-                        if (runMigrations) {
-                            const migrateArea = document.getElementById('migrate-output');
-                            migrateArea.style.display = 'block';
-                            migrateArea.textContent = 'Running migrations...\n';
-
-                            // call migration endpoint
-                            const mig = await postForm(dbMigrateUrl, createBtn, 'Running migrations');
-                            if (mig && mig.success) {
-                                migrateArea.textContent += mig.output || 'Migrations ran successfully';
-                                // After migrations succeed, proceed to test connection
-                                testBtn.click();
-                            } else {
-                                migrateArea.textContent += mig.message || 'Migration failed';
-                                return; // stop here so user can inspect migration error
-                            }
-                        } else {
-                            // if not running migrations, auto-run test
-                            testBtn.click();
-                        }
+                        // After creating DB, move to step 2 (Migrate)
+                        window.location = '{{ url('/install?step=2') }}';
                     }
                 });
 
                 testBtn.addEventListener('click', async (e) => {
                     const result = await postForm(dbTestUrl, testBtn, 'Testing connection');
                     if (result && result.success) {
-                        message.textContent = result.message + '. Redirecting to next step...';
+                        message.textContent = result.message + '. Redirecting to migrate step...';
                         setTimeout(() => { window.location = '{{ url('/install?step=2') }}'; }, 900);
                     }
                 });
             </script>
         @endif
 
-        {{-- Step 2: Admin account and finalize --}}
+        {{-- Step 2: Run migrations --}}
         @if (($step ?? 1) === 2)
+            <h3 style="margin-top:1.25rem">Database (summary)</h3>
+            <p class="note">Host: <strong>{{ env('DB_HOST', '127.0.0.1') }}</strong>
+            &nbsp;•&nbsp; DB: <strong>{{ env('DB_DATABASE', 'not set') }}</strong>
+            &nbsp;•&nbsp; User: <strong>{{ env('DB_USERNAME', 'not set') }}</strong></p>
+
+            <form id="db-test-form">
+                @csrf
+                <input type="hidden" name="db_host" value="{{ env('DB_HOST', '') }}" />
+                <input type="hidden" name="db_port" value="{{ env('DB_PORT', '3306') }}" />
+                <input type="hidden" name="db_database" value="{{ env('DB_DATABASE', '') }}" />
+                <input type="hidden" name="db_username" value="{{ env('DB_USERNAME', '') }}" />
+                <input type="hidden" name="db_password" value="{{ env('DB_PASSWORD', '') }}" />
+            </form>
+
+            <div style="display:flex;gap:0.5rem;align-items:center;margin-top:1rem">
+                <button id="run-migrations-btn" class="btn" type="button">Run Migrations</button>
+                <button id="migrate-test-btn" class="btn" type="button" style="background:#6b7280" disabled>Test Connection</button>
+                <a href="{{ url('/install?step=1') }}" class="btn" style="background:#e5e7eb;color:#111">Back</a>
+            </div>
+
+            <div id="migrate-output" style="white-space:pre-wrap;background:#f3f4f6;border-radius:6px;padding:0.75rem;margin-top:1rem;display:none"></div>
+
+            <script>
+                const runBtn = document.getElementById('run-migrations-btn');
+                const testBtn2 = document.getElementById('migrate-test-btn');
+                const migrateOutput = document.getElementById('migrate-output');
+                const testForm = document.getElementById('db-test-form');
+                const csrf2 = '{{ csrf_token() }}';
+                const dbMigrateUrl2 = '{{ route('install.dbmigrate') }}';
+                const dbTestUrl2 = '{{ route('install.dbtest') }}';
+
+                async function postFormFromElement(url, formElement, btnEl, actionLabel) {
+                    migrateOutput.style.color = 'black';
+                    migrateOutput.style.display = 'block';
+                    migrateOutput.textContent = actionLabel + '...\n';
+                    btnEl.disabled = true;
+                    const formData = new FormData(formElement);
+                    try {
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': csrf2, 'Accept': 'application/json' },
+                            body: formData
+                        });
+                        const json = await res.json();
+                        if (res.ok && json.success) {
+                            migrateOutput.style.color = 'green';
+                            migrateOutput.textContent += json.output || json.message || 'Success';
+                            return json;
+                        } else {
+                            migrateOutput.style.color = 'crimson';
+                            migrateOutput.textContent += json.message || 'Error';
+                            return json;
+                        }
+                    } catch (err) {
+                        migrateOutput.style.color = 'crimson';
+                        migrateOutput.textContent += (err.message || 'Request failed');
+                        return { success: false, message: err.message };
+                    } finally {
+                        btnEl.disabled = false;
+                    }
+                }
+
+                runBtn.addEventListener('click', async () => {
+                    const mig = await postFormFromElement(dbMigrateUrl2, testForm, runBtn, 'Running migrations');
+                    if (mig && mig.success) {
+                        // enable test and auto-run it
+                        testBtn2.disabled = false;
+                        const test = await postFormFromElement(dbTestUrl2, testForm, testBtn2, 'Testing connection');
+                        if (test && test.success) {
+                            // redirect to admin step
+                            setTimeout(() => { window.location = '{{ url('/install?step=3') }}'; }, 800);
+                        }
+                    }
+                });
+
+                testBtn2.addEventListener('click', async () => {
+                    const test = await postFormFromElement(dbTestUrl2, testForm, testBtn2, 'Testing connection');
+                    if (test && test.success) {
+                        setTimeout(() => { window.location = '{{ url('/install?step=3') }}'; }, 800);
+                    }
+                });
+            </script>
+        @endif
+
+        {{-- Step 3: Admin account and finalize --}}
+        @if (($step ?? 1) === 3)
             <form method="post" action="{{ route('install.post') }}">
                 @csrf
 
@@ -210,7 +266,10 @@
                     <label><input type="checkbox" name="run_migrations" checked /> Run migrations after install</label>
                 </div>
 
-                <button class="btn" type="submit">Install and create admin</button>
+                <div style="display:flex;gap:0.5rem;align-items:center;margin-top:1rem">
+                    <button class="btn" type="submit">Install and create admin</button>
+                    <a href="{{ url('/install?step=2') }}" class="btn" style="background:#e5e7eb;color:#111">Back</a>
+                </div>
             </form>
 
             <p class="note" style="margin-top:1rem">After installation, you can login using the admin user you created and finish configuration.</p>
