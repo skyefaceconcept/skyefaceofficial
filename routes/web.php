@@ -51,6 +51,11 @@ Route::get('/install/debug-test', function () {
     return $controller->dbTest($req);
 });
 
+// Simple ping endpoint for quick client connectivity checks (dev)
+Route::get('/install/ping', function () {
+    return response()->json(['ok' => true, 'time' => now()->toDateTimeString()]);
+})->name('install.ping');
+
     // Redirect everything else to the installer, but allow common endpoints used
     // during setup (payment callbacks, api routes, branding assets, test-email)
     Route::any('{any}', function () {

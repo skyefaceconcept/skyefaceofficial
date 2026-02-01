@@ -164,8 +164,10 @@
             </form>
 
             <div style="display:flex;gap:0.5rem;align-items:center;margin-top:1rem">
-                <button id="run-migrations-btn" class="btn" type="button">Run Migrations</button>
-                <button id="migrate-test-btn" class="btn" type="button" style="background:#6b7280">Test Connection</button>
+                <button id="run-migrations-btn" class="btn" type="button" onclick="(async function(){ const out=document.getElementById('migrate-output'); out.style.display='block'; out.style.color='black'; out.textContent='Pinging server before migration...'; try{ const res=await fetch('{{ route('install.ping') }}',{credentials:'same-origin'}); const j=await res.json(); out.textContent='Ping OK: '+JSON.stringify(j); }catch(e){ out.style.color='crimson'; out.textContent='Ping failed: '+e.message; } })()">Run Migrations</button>
+                <button id="migrate-test-btn" class="btn" type="button" style="background:#6b7280" onclick="(async function(){ const m=document.getElementById('db-message') || document.getElementById('migrate-output'); m.style.display='block'; m.style.color='black'; m.textContent='Pinging server for DB test...'; try{ const res=await fetch('{{ route('install.ping') }}',{credentials:'same-origin'}); const j=await res.json(); m.style.color='green'; m.textContent='Ping OK: '+JSON.stringify(j); }catch(e){ m.style.color='crimson'; m.textContent='Ping failed: '+e.message; } })()">Test Connection</button>
+                <a href="{{ url('/install?step=1') }}" class="btn" style="background:#e5e7eb;color:#111">Back</a>
+            </div>
 
             <div id="migrate-output" style="white-space:pre-wrap;background:#f3f4f6;border-radius:6px;padding:0.75rem;margin-top:1rem;display:none"></div>
 
@@ -192,6 +194,19 @@
                 const csrf2 = '{{ csrf_token() }}';
                 const dbMigrateUrl2 = '{{ route('install.dbmigrate') }}';
                 const dbTestUrl2 = '{{ route('install.dbtest') }}';
+
+                // Surface any JS errors to the installer UI for easier debugging
+                window.onerror = function(message, source, lineno, colno, error) {
+                    try {
+                        const out = document.getElementById('migrate-output') || document.getElementById('db-message');
+                        if (out) {
+                            out.style.display = 'block';
+                            out.style.color = 'crimson';
+                            out.textContent = 'JS Error: ' + message + ' at ' + source + ':' + lineno;
+                        }
+                    } catch (e) {}
+                    console.error('Installer window.onerror', message, source, lineno, colno, error);
+                };
 
                 function renderMigrations(migs) {
                     migrationItems.innerHTML = '';
