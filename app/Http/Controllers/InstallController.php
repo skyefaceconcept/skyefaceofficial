@@ -19,8 +19,48 @@ class InstallController extends Controller
     }
 
     /**
-     * Test DB connection and create database if it does not exist.
+     * Create the database on the host (does NOT attempt to connect to the DB itself).
      */
+    public function dbCreate(\Illuminate\Http\Request $request)
+    {
+        $data = $request->validate([
+            'db_host' => 'required|string',
+            'db_port' => 'nullable|numeric',
+            'db_database' => 'required|string',
+            'db_username' => 'nullable|string',
+            'db_password' => 'nullable|string',
+            'persist' => 'sometimes|boolean',
+        ]);
+
+        $host = $data['db_host'];
+        $port = $data['db_port'] ?? env('DB_PORT', 3306);
+        $dbname = $data['db_database'];
+        $user = $data['db_username'] ?? env('DB_USERNAME', 'root');
+        $pass = $data['db_password'] ?? '';
+
+        try {
+            $dsn = "mysql:host={$host};port={$port}";
+            $pdo = new \PDO($dsn, $user, $pass, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+
+            // Create database if absent
+            $pdo->exec("CREATE DATABASE IF NOT EXISTS `" . str_replace('`', '``', $dbname) . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+
+            // Persist to .env if requested (store host & credentials now)
+            if ($request->boolean('persist', true)) {
+                $this->setEnvValue('DB_CONNECTION', 'mysql');
+                $this->setEnvValue('DB_HOST', $host);
+                $this->setEnvValue('DB_PORT', $port);
+                $this->setEnvValue('DB_DATABASE', $dbname);
+                $this->setEnvValue('DB_USERNAME', $user);
+                $this->setEnvValue('DB_PASSWORD', $pass);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Database created or already exists']);
+        } catch (\PDOException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
     public function dbTest(\Illuminate\Http\Request $request)
     {
         $data = $request->validate([

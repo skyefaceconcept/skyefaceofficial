@@ -74,25 +74,30 @@
 
                 <div id="db-message" style="margin-top:1rem"></div>
 
-                <button id="db-test-btn" class="btn" type="button">Test &amp; Create Database</button>
+                <div style="display:flex;gap:0.5rem;align-items:center;margin-top:1rem">
+                    <button id="db-create-btn" class="btn" type="button">Create Database</button>
+                    <button id="db-test-btn" class="btn" type="button" style="background:#6b7280">Test Connection</button>
+                </div>
             </form>
 
             <script>
                 const dbForm = document.getElementById('db-form');
-                const btn = document.getElementById('db-test-btn');
+                const createBtn = document.getElementById('db-create-btn');
+                const testBtn = document.getElementById('db-test-btn');
                 const message = document.getElementById('db-message');
                 const csrf = '{{ csrf_token() }}';
                 const dbTestUrl = '{{ route('install.dbtest') }}';
+                const dbCreateUrl = '{{ route('install.dbcreate') }}';
 
-                btn.addEventListener('click', async (e) => {
-                    message.textContent = 'Testing connection...';
-                    btn.disabled = true;
+                // Helper to send form data to a route and return parsed JSON
+                async function postForm(url, btnElement, actionLabel) {
+                    message.style.color = 'black';
+                    message.textContent = actionLabel + '...';
+                    btnElement.disabled = true;
                     const formData = new FormData(dbForm);
-                    // include persist boolean
                     formData.set('persist', document.getElementById('persist').checked ? '1' : '0');
-
                     try {
-                        const res = await fetch(dbTestUrl, {
+                        const res = await fetch(url, {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': csrf,
@@ -103,18 +108,37 @@
                         const json = await res.json();
                         if (res.ok && json.success) {
                             message.style.color = 'green';
-                            message.textContent = json.message + '. Redirecting to next step...';
-                            // proceed to step 2
-                            setTimeout(() => { window.location = '{{ url('/install?step=2') }}'; }, 900);
+                            message.textContent = json.message;
+                            return json;
                         } else {
                             message.style.color = 'crimson';
                             message.textContent = json.message || 'Unexpected response';
+                            return json;
                         }
                     } catch (err) {
                         message.style.color = 'crimson';
-                        message.textContent = err.message || 'Connection failed';
+                        message.textContent = err.message || 'Request failed';
+                        return { success: false, message: err.message };
+                    } finally {
+                        btnElement.disabled = false;
                     }
-                    btn.disabled = false;
+                }
+
+                createBtn.addEventListener('click', async (e) => {
+                    const result = await postForm(dbCreateUrl, createBtn, 'Creating database');
+                    if (result && result.success) {
+                        // When create succeeds, enable test button and auto-run test for convenience
+                        testBtn.style.background = '#111827';
+                        testBtn.click();
+                    }
+                });
+
+                testBtn.addEventListener('click', async (e) => {
+                    const result = await postForm(dbTestUrl, testBtn, 'Testing connection');
+                    if (result && result.success) {
+                        message.textContent = result.message + '. Redirecting to next step...';
+                        setTimeout(() => { window.location = '{{ url('/install?step=2') }}'; }, 900);
+                    }
                 });
             </script>
         @endif
