@@ -159,14 +159,36 @@ class InstallController extends Controller
         }
 
         // Start the background artisan command which will update status file
-        $cmd = ['php', base_path('artisan'), 'install:migrate-start'];
+        // Use PHP_BINARY to ensure we call the same PHP executable used by this process
+        $cmd = [PHP_BINARY, base_path('artisan'), 'install:migrate-start'];
         $process = new Process($cmd, base_path());
 
         try {
             $process->start();
-            return response()->json(['success' => true, 'message' => 'Migration started']);
+            // Give it a small moment to error out if the binary/path is incorrect
+            usleep(150000);
+            if ($process->isRunning() || $process->getExitCode() === null) {
+                return response()->json(['success' => true, 'message' => 'Migration started']);
+            }
+
+            // Unexpected non-running process - try fallback to synchronous run
+            $output = null;
+            try {
+                Artisan::call('install:migrate-start');
+                $output = Artisan::output();
+                return response()->json(['success' => true, 'message' => 'Migration run synchronously as fallback', 'output' => $output]);
+            } catch (\Exception $ex) {
+                return response()->json(['success' => false, 'message' => 'Failed to start migration (fallback): ' . $ex->getMessage()], 500);
+            }
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to start background migration: ' . $e->getMessage()], 500);
+            // Final fallback: attempt synchronous migration
+            try {
+                Artisan::call('install:migrate-start');
+                $output = Artisan::output();
+                return response()->json(['success' => true, 'message' => 'Migration run synchronously after error', 'output' => $output]);
+            } catch (\Exception $ex) {
+                return response()->json(['success' => false, 'message' => 'Failed to start background migration: ' . $e->getMessage() . ' / ' . $ex->getMessage()], 500);
+            }
         }
     }
 

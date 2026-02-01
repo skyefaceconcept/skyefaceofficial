@@ -163,20 +163,63 @@
 
             <div style="display:flex;gap:0.5rem;align-items:center;margin-top:1rem">
                 <button id="run-migrations-btn" class="btn" type="button">Run Migrations</button>
-                <button id="migrate-test-btn" class="btn" type="button" style="background:#6b7280" disabled>Test Connection</button>
-                <a href="{{ url('/install?step=1') }}" class="btn" style="background:#e5e7eb;color:#111">Back</a>
-            </div>
+                <button id="migrate-test-btn" class="btn" type="button" style="background:#6b7280">Test Connection</button>
 
             <div id="migrate-output" style="white-space:pre-wrap;background:#f3f4f6;border-radius:6px;padding:0.75rem;margin-top:1rem;display:none"></div>
+
+            <div id="migration-list" style="margin-top:1rem;background:#fff;border:1px solid #e5e7eb;padding:0.75rem;border-radius:6px;display:none">
+                <strong>Migrations</strong>
+                <ul id="migration-items" style="list-style:none;padding-left:0;margin-top:0.5rem"></ul>
+            </div>
+
+            <style>
+                .mig-pending { color: #6b7280 }
+                .mig-running { color: #f59e0b }
+                .mig-done { color: #10b981; font-weight:600 }
+                .mig-failed { color: #ef4444; font-weight:600 }
+                .mig-item { padding:0.25rem 0; border-bottom: 1px dashed #efefef }
+            </style>
 
             <script>
                 const runBtn = document.getElementById('run-migrations-btn');
                 const testBtn2 = document.getElementById('migrate-test-btn');
                 const migrateOutput = document.getElementById('migrate-output');
+                const migrationList = document.getElementById('migration-list');
+                const migrationItems = document.getElementById('migration-items');
                 const testForm = document.getElementById('db-test-form');
                 const csrf2 = '{{ csrf_token() }}';
                 const dbMigrateUrl2 = '{{ route('install.dbmigrate') }}';
                 const dbTestUrl2 = '{{ route('install.dbtest') }}';
+
+                function renderMigrations(migs) {
+                    migrationItems.innerHTML = '';
+                    if (!migs || !migs.length) {
+                        migrationList.style.display = 'none';
+                        return;
+                    }
+                    migrationList.style.display = 'block';
+                    for (const m of migs) {
+                        const li = document.createElement('li');
+                        li.className = 'mig-item mig-pending';
+                        li.setAttribute('data-name', m.name);
+                        li.innerHTML = `<span style="display:inline-block;width:70%">${m.name}</span><span style="float:right" class="mig-status">${m.status || 'pending'}</span>`;
+                        migrationItems.appendChild(li);
+                    }
+                }
+
+                function updateMigrationStatus(migs) {
+                    for (const m of migs) {
+                        const el = migrationItems.querySelector(`[data-name='${m.name}']`);
+                        if (!el) continue;
+                        const statusEl = el.querySelector('.mig-status');
+                        statusEl.textContent = m.status || 'pending';
+                        el.classList.remove('mig-pending','mig-running','mig-done','mig-failed');
+                        if ((m.status || '') === 'done') el.classList.add('mig-done');
+                        else if ((m.status || '') === 'failed') el.classList.add('mig-failed');
+                        else if ((m.status || '') === 'running') el.classList.add('mig-running');
+                        else el.classList.add('mig-pending');
+                    }
+                }
 
                 async function postFormFromElement(url, formElement, btnEl, actionLabel) {
                     migrateOutput.style.color = 'black';
@@ -218,8 +261,23 @@
 
                     try {
                         const res = await fetch('{{ route('install.dbmigrate_start') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf2, 'Accept': 'application/json' } });
-                        const json = await res.json();
-                        if (!res.ok || !json.success) {
+                        let json;
+                        if (!res.ok) {
+                            // Try to show server response body for easier debugging
+                            let txt = await res.text();
+                            try {
+                                json = JSON.parse(txt);
+                            } catch (e) {
+                                migrateOutput.style.color = 'crimson';
+                                migrateOutput.textContent += 'Server responded: ' + res.status + ' - ' + txt;
+                                runBtn.disabled = false;
+                                return;
+                            }
+                        } else {
+                            json = await res.json();
+                        }
+
+                        if (!json.success) {
                             migrateOutput.style.color = 'crimson';
                             migrateOutput.textContent += (json.message || 'Failed to start migration');
                             runBtn.disabled = false;
@@ -233,6 +291,17 @@
                             const status = sjson.status || {};
                             migrateOutput.textContent = '';
                             if (sjson.log) migrateOutput.textContent += sjson.log + '\n';
+
+                            // Render or update migration list
+                            const migs = status.migrations || status.migrations === undefined ? status.migrations : null;
+                            if (migs) {
+                                // first time render if not present
+                                if (migrationItems.children.length === 0) {
+                                    renderMigrations(migs);
+                                }
+                                updateMigrationStatus(migs);
+                            }
+
                             migrateOutput.textContent += '\nStatus: ' + (status.status || 'unknown');
 
                             if (status.status === 'running') {
@@ -270,7 +339,7 @@
                         setTimeout(() => { window.location = '{{ url('/install?step=3') }}'; }, 800);
                     }
                 });
-            </script>
+            </div>
         @endif
 
         {{-- Step 3: Admin account and finalize --}}
