@@ -35,6 +35,22 @@ if (! file_exists(storage_path('app/installed'))) {
     Route::get('/install/db-migrate-status', [InstallController::class, 'dbMigrateStatus'])->name('install.dbmigrate_status');
     Route::post('/install/db-test', [InstallController::class, 'dbTest'])->name('install.dbtest');
 
+// Temporary debug route to quickly test DB connectivity from the browser (dev only)
+Route::get('/install/debug-test', function () {
+    $controller = app(\App\Http\Controllers\InstallController::class);
+    // Build a request using current env values
+    $req = request();
+    $req->merge([
+        'db_host' => env('DB_HOST', '127.0.0.1'),
+        'db_port' => env('DB_PORT', 3306),
+        'db_database' => env('DB_DATABASE', ''),
+        'db_username' => env('DB_USERNAME', 'root'),
+        'db_password' => env('DB_PASSWORD', ''),
+        'persist' => false,
+    ]);
+    return $controller->dbTest($req);
+});
+
     // Redirect everything else to the installer, but allow common endpoints used
     // during setup (payment callbacks, api routes, branding assets, test-email)
     Route::any('{any}', function () {
