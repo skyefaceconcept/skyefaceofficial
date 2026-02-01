@@ -18,7 +18,10 @@ return [
     |
     */
 
-    'driver' => env('SESSION_DRIVER', 'database'),
+    // If DB isn't set yet (first-time installer), fall back to file driver so the
+    // app can boot without a database. When a DB is configured this respects
+    // the SESSION_DRIVER env value (defaults to database in production).
+    'driver' => env('DB_DATABASE') ? env('SESSION_DRIVER', 'database') : 'file',
 
     /*
     |--------------------------------------------------------------------------

@@ -15,7 +15,10 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'database'),
+    // If DB isn't configured yet, use file cache so cache operations don't
+    // fail during early boot (installer flow). When DB exists this will use the
+    // configured cache store (often 'database').
+    'default' => env('DB_DATABASE') ? env('CACHE_STORE', 'database') : 'file',
 
     /*
     |--------------------------------------------------------------------------
