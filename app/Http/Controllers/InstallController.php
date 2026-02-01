@@ -114,6 +114,9 @@ class InstallController extends Controller
         $pass = $data['db_password'] ?? '';
 
         try {
+            // Log attempt
+            try { \Illuminate\Support\Facades\Log::info('dbTest called', ['host'=>$host,'db'=>$dbname,'user'=>$user,'ip'=>$request->ip()]); } catch (\Exception $__e) {}
+
             $dsn = "mysql:host={$host};port={$port}";
             $pdo = new \PDO($dsn, $user, $pass, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
 
@@ -134,12 +137,20 @@ class InstallController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Database is reachable and was created/verified']);
         } catch (\PDOException $e) {
+            try { \Illuminate\Support\Facades\Log::warning('dbTest failed', ['error'=>$e->getMessage()]); } catch (\Exception $__e) {}
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
 
     public function dbMigrateStart(Request $request)
     {
+        // Debug log of incoming request
+        try {
+            \Illuminate\Support\Facades\Log::info('dbMigrateStart called', ['ip' => $request->ip(), 'env_db' => env('DB_DATABASE')]);
+        } catch (\Exception $__e) {
+            // ignore logging errors
+        }
+
         // Update runtime DB config as in dbMigrate
         $connection = config('database.default');
         config([
@@ -156,6 +167,7 @@ class InstallController extends Controller
             Artisan::call('config:clear');
         } catch (\Exception $e) {
             // ignore connectivity errors here — status endpoint will report
+            try { \Illuminate\Support\Facades\Log::warning('dbMigrateStart connection reset failed', ['error' => $e->getMessage()]); } catch (\Exception $__) {}
         }
 
         // Start the background artisan command which will update status file
@@ -168,6 +180,7 @@ class InstallController extends Controller
             // Give it a small moment to error out if the binary/path is incorrect
             usleep(150000);
             if ($process->isRunning() || $process->getExitCode() === null) {
+                try { \Illuminate\Support\Facades\Log::info('dbMigrateStart started background process'); } catch (\Exception $__) {}
                 return response()->json(['success' => true, 'message' => 'Migration started']);
             }
 
@@ -176,8 +189,10 @@ class InstallController extends Controller
             try {
                 Artisan::call('install:migrate-start');
                 $output = Artisan::output();
+                try { \Illuminate\Support\Facades\Log::info('dbMigrateStart fallback sync executed', ['output' => substr($output,0,2000)]); } catch (\Exception $__) {}
                 return response()->json(['success' => true, 'message' => 'Migration run synchronously as fallback', 'output' => $output]);
             } catch (\Exception $ex) {
+                try { \Illuminate\Support\Facades\Log::error('dbMigrateStart fallback failed', ['error' => $ex->getMessage()]); } catch (\Exception $__) {}
                 return response()->json(['success' => false, 'message' => 'Failed to start migration (fallback): ' . $ex->getMessage()], 500);
             }
         } catch (\Exception $e) {
@@ -185,8 +200,10 @@ class InstallController extends Controller
             try {
                 Artisan::call('install:migrate-start');
                 $output = Artisan::output();
+                try { \Illuminate\Support\Facades\Log::info('dbMigrateStart error fallback sync', ['output' => substr($output,0,2000)]); } catch (\Exception $__) {}
                 return response()->json(['success' => true, 'message' => 'Migration run synchronously after error', 'output' => $output]);
             } catch (\Exception $ex) {
+                try { \Illuminate\Support\Facades\Log::error('dbMigrateStart failed', ['error' => $e->getMessage(), 'fallback' => $ex->getMessage()]); } catch (\Exception $__) {}
                 return response()->json(['success' => false, 'message' => 'Failed to start background migration: ' . $e->getMessage() . ' / ' . $ex->getMessage()], 500);
             }
         }

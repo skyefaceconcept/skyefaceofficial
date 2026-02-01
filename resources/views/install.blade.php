@@ -105,6 +105,7 @@
                                 'X-CSRF-TOKEN': csrf,
                                 'Accept': 'application/json'
                             },
+                            credentials: 'same-origin',
                             body: formData
                         });
                         const json = await res.json();
@@ -118,8 +119,9 @@
                             return json;
                         }
                     } catch (err) {
+                        console.error('Installer request error', err);
                         message.style.color = 'crimson';
-                        message.textContent = err.message || 'Request failed';
+                        message.textContent = err.message || 'Request failed (see console)';
                         return { success: false, message: err.message };
                     } finally {
                         btnElement.disabled = false;
@@ -231,9 +233,16 @@
                         const res = await fetch(url, {
                             method: 'POST',
                             headers: { 'X-CSRF-TOKEN': csrf2, 'Accept': 'application/json' },
+                            credentials: 'same-origin',
                             body: formData
                         });
-                        const json = await res.json();
+                        let json;
+                        if (!res.ok) {
+                            const txt = await res.text();
+                            try { json = JSON.parse(txt); } catch (e) { json = { success: false, message: 'Server error: ' + res.status + ' - ' + txt }; }
+                        } else {
+                            json = await res.json();
+                        }
                         if (res.ok && json.success) {
                             migrateOutput.style.color = 'green';
                             migrateOutput.textContent += json.output || json.message || 'Success';
@@ -260,7 +269,7 @@
                     runBtn.disabled = true;
 
                     try {
-                        const res = await fetch('{{ route('install.dbmigrate_start') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf2, 'Accept': 'application/json' } });
+                        const res = await fetch('{{ route('install.dbmigrate_start') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf2, 'Accept': 'application/json' }, credentials: 'same-origin' });
                         let json;
                         if (!res.ok) {
                             // Try to show server response body for easier debugging
@@ -286,7 +295,7 @@
 
                         // Poll status endpoint until done/error
                         const poll = async () => {
-                            const sres = await fetch('{{ route('install.dbmigrate_status') }}', { method: 'GET', headers: { 'Accept': 'application/json' } });
+                            const sres = await fetch('{{ route('install.dbmigrate_status') }}', { method: 'GET', headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
                             const sjson = await sres.json();
                             const status = sjson.status || {};
                             migrateOutput.textContent = '';
@@ -327,8 +336,9 @@
 
                         setTimeout(poll, 1000);
                     } catch (err) {
+                        console.error('Migration start error', err);
                         migrateOutput.style.color = 'crimson';
-                        migrateOutput.textContent += '\n' + (err.message || 'Request failed');
+                        migrateOutput.textContent += '\n' + (err.message || 'Request failed (see console)');
                         runBtn.disabled = false;
                     }
                 });
