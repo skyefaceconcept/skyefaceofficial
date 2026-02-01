@@ -22,62 +22,13 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\VerifyEmail;
 use App\Http\Controllers\Admin\OrderController;
-use App\Http\Controllers\InstallController;
+// Installer removed - InstallController import removed
 
-// If the application has not yet been installed (no installed lock file),
-// expose an interactive installer and redirect all other routes to it
-if (! file_exists(storage_path('app/installed'))) {
-    Route::get('/install', [InstallController::class, 'show'])->name('install.show');
-    Route::post('/install', [InstallController::class, 'install'])->name('install.post');
-    Route::post('/install/db-create', [InstallController::class, 'dbCreate'])->name('install.dbcreate');
-    Route::post('/install/db-migrate', [InstallController::class, 'dbMigrate'])->name('install.dbmigrate');
-    Route::post('/install/db-migrate-start', [InstallController::class, 'dbMigrateStart'])->name('install.dbmigrate_start');
-    Route::get('/install/db-migrate-status', [InstallController::class, 'dbMigrateStatus'])->name('install.dbmigrate_status');
-    // List available migration files (for installer UI)
-    Route::get('/install/list-migrations', [InstallController::class, 'listMigrations'])->name('install.list_migrations');
-    Route::post('/install/db-test', [InstallController::class, 'dbTest'])->name('install.dbtest');
-    Route::post('/install/queue-work-once', [InstallController::class, 'queueWorkOnce'])->name('install.queuework_once');
+// Installer removed. Installation routes and redirects were intentionally deleted.
+// If you need to re-enable the installer in future, restore the installer routes and files from the repository history.
 
-// Temporary debug route to quickly test DB connectivity from the browser (dev only)
-Route::get('/install/debug-test', function () {
-    $controller = app(\App\Http\Controllers\InstallController::class);
-    // Build a request using current env values
-    $req = request();
-    $req->merge([
-        'db_host' => env('DB_HOST', '127.0.0.1'),
-        'db_port' => env('DB_PORT', 3306),
-        'db_database' => env('DB_DATABASE', ''),
-        'db_username' => env('DB_USERNAME', 'root'),
-        'db_password' => env('DB_PASSWORD', ''),
-        'persist' => false,
-    ]);
-    return $controller->dbTest($req);
-});
+// (Note: Previously the app redirected all requests to /install until installation was completed.)
 
-// Simple ping endpoint for quick client connectivity checks (dev)
-Route::get('/install/ping', function () {
-    return response()->json(['ok' => true, 'time' => now()->toDateTimeString()]);
-})->name('install.ping');
-
-// Client-side debug logging endpoint used by the installer UI to send JS errors and click events
-Route::post('/install/client-log', function (Request $request) {
-    try {
-        \Log::info('Installer client log', ['payload' => $request->all(), 'ip' => $request->ip(), 'headers' => [
-            'user-agent' => $request->header('User-Agent'),
-            'referer' => $request->header('Referer')
-        ]]);
-    } catch (\Exception $e) {
-        // ignore logging errors
-    }
-    return response()->json(['success' => true]);
-});
-
-    // Redirect everything else to the installer, but allow common endpoints used
-    // during setup (payment callbacks, api routes, branding assets, test-email)
-    Route::any('{any}', function () {
-        return redirect()->route('install.show');
-    })->where('any', '^(?!install|payment|api|branding|storage|test-email).*$');
-}
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 

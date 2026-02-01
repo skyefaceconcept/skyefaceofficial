@@ -14,9 +14,7 @@ class InstallController extends Controller
 {
     public function show(\Illuminate\Http\Request $request)
     {
-        // Show installer and accept optional step query parameter (1 = DB, 2 = Admin)
-        $step = (int) $request->query('step', 1);
-        return view('install', ['step' => $step]);
+        abort(410, 'Installer removed');
     }
 
     /**
@@ -24,42 +22,7 @@ class InstallController extends Controller
      */
     public function dbCreate(\Illuminate\Http\Request $request)
     {
-        $data = $request->validate([
-            'db_host' => 'required|string',
-            'db_port' => 'nullable|numeric',
-            'db_database' => 'required|string',
-            'db_username' => 'nullable|string',
-            'db_password' => 'nullable|string',
-            'persist' => 'sometimes|boolean',
-        ]);
-
-        $host = $data['db_host'];
-        $port = $data['db_port'] ?? env('DB_PORT', 3306);
-        $dbname = $data['db_database'];
-        $user = $data['db_username'] ?? env('DB_USERNAME', 'root');
-        $pass = $data['db_password'] ?? '';
-
-        try {
-            $dsn = "mysql:host={$host};port={$port}";
-            $pdo = new \PDO($dsn, $user, $pass, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
-
-            // Create database if absent
-            $pdo->exec("CREATE DATABASE IF NOT EXISTS `" . str_replace('`', '``', $dbname) . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-
-            // Persist to .env if requested (store host & credentials now)
-            if ($request->boolean('persist', true)) {
-                $this->setEnvValue('DB_CONNECTION', 'mysql');
-                $this->setEnvValue('DB_HOST', $host);
-                $this->setEnvValue('DB_PORT', $port);
-                $this->setEnvValue('DB_DATABASE', $dbname);
-                $this->setEnvValue('DB_USERNAME', $user);
-                $this->setEnvValue('DB_PASSWORD', $pass);
-            }
-
-            return response()->json(['success' => true, 'message' => 'Database created or already exists']);
-        } catch (\PDOException $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
-        }
+        abort(410, 'Installer removed');
     }
 
     /**
@@ -67,167 +30,22 @@ class InstallController extends Controller
      */
     public function dbMigrate(Request $request)
     {
-        // Ensure runtime DB config is using latest env values
-        $connection = config('database.default');
-        config([
-            "database.connections.{$connection}.host" => env('DB_HOST'),
-            "database.connections.{$connection}.port" => env('DB_PORT'),
-            "database.connections.{$connection}.database" => env('DB_DATABASE'),
-            "database.connections.{$connection}.username" => env('DB_USERNAME'),
-            "database.connections.{$connection}.password" => env('DB_PASSWORD'),
-        ]);
-
-        // Purge and reconnect so the new config is used
-        try {
-            // Purge and reconnect the DB connection
-            DB::purge($connection);
-            DB::reconnect($connection);
-
-            // Clear config cache to be safe
-            Artisan::call('config:clear');
-
-            // Run migrations (synchronous fallback)
-            Artisan::call('migrate', ['--force' => true]);
-            $output = Artisan::output();
-
-            return response()->json(['success' => true, 'message' => 'Migrations ran successfully', 'output' => $output]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage(), 'output' => $e->getTraceAsString() ?? ''], 422);
-        }
+        abort(410, 'Installer removed');
     }
 
     public function dbTest(\Illuminate\Http\Request $request)
     {
-        $data = $request->validate([
-            'db_host' => 'required|string',
-            'db_port' => 'nullable|numeric',
-            'db_database' => 'required|string',
-            'db_username' => 'nullable|string',
-            'db_password' => 'nullable|string',
-            'persist' => 'sometimes|boolean',
-        ]);
-
-        $host = $data['db_host'];
-        $port = $data['db_port'] ?? env('DB_PORT', 3306);
-        $dbname = $data['db_database'];
-        $user = $data['db_username'] ?? env('DB_USERNAME', 'root');
-        $pass = $data['db_password'] ?? '';
-
-        try {
-            // Log attempt
-            try { \Illuminate\Support\Facades\Log::info('dbTest called', ['host'=>$host,'db'=>$dbname,'user'=>$user,'ip'=>$request->ip()]); } catch (\Exception $__e) {}
-
-            $dsn = "mysql:host={$host};port={$port}";
-            $pdo = new \PDO($dsn, $user, $pass, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
-
-            // Create database if absent
-            if (!empty($dbname)) {
-                $pdo->exec("CREATE DATABASE IF NOT EXISTS `" . str_replace('`', '``', $dbname) . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            }
-
-            // Persist to .env if requested
-            if ($request->boolean('persist', true)) {
-                $this->setEnvValue('DB_CONNECTION', 'mysql');
-                $this->setEnvValue('DB_HOST', $host);
-                $this->setEnvValue('DB_PORT', $port);
-                $this->setEnvValue('DB_DATABASE', $dbname);
-                $this->setEnvValue('DB_USERNAME', $user);
-                $this->setEnvValue('DB_PASSWORD', $pass);
-            }
-
-            return response()->json(['success' => true, 'message' => 'Database is reachable and was created/verified']);
-        } catch (\PDOException $e) {
-            try { \Illuminate\Support\Facades\Log::warning('dbTest failed', ['error'=>$e->getMessage()]); } catch (\Exception $__e) {}
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
-        }
+        abort(410, 'Installer removed');
     }
 
     public function dbMigrateStart(Request $request)
     {
-        // Debug log of incoming request
-        try {
-            \Illuminate\Support\Facades\Log::info('dbMigrateStart called', ['ip' => $request->ip(), 'env_db' => env('DB_DATABASE')]);
-        } catch (\Exception $__e) {
-            // ignore logging errors
-        }
-
-        // Update runtime DB config as in dbMigrate
-        $connection = config('database.default');
-        config([
-            "database.connections.{$connection}.host" => env('DB_HOST'),
-            "database.connections.{$connection}.port" => env('DB_PORT'),
-            "database.connections.{$connection}.database" => env('DB_DATABASE'),
-            "database.connections.{$connection}.username" => env('DB_USERNAME'),
-            "database.connections.{$connection}.password" => env('DB_PASSWORD'),
-        ]);
-
-        try {
-            DB::purge($connection);
-            DB::reconnect($connection);
-            Artisan::call('config:clear');
-        } catch (\Exception $e) {
-            // ignore connectivity errors here — status endpoint will report
-            try { \Illuminate\Support\Facades\Log::warning('dbMigrateStart connection reset failed', ['error' => $e->getMessage()]); } catch (\Exception $__) {}
-        }
-
-        // Start the migration job via Laravel queue (more reliable cross-platform approach)
-        $statusPath = storage_path('app/install_migrate_status.json');
-        // Guard: if a migration is already running, refuse to start another
-        if (file_exists($statusPath)) {
-            $raw = @file_get_contents($statusPath);
-            $decoded = json_decode($raw, true) ?: [];
-            if (isset($decoded['status']) && $decoded['status'] === 'running') {
-                try { \Illuminate\Support\Facades\Log::warning('dbMigrateStart refused: already running'); } catch (\Exception $__) {}
-                return response()->json(['success' => false, 'message' => 'Migration already in progress'], 409);
-            }
-        }
-
-        // Write initial running status with list of migrations
-        $files = glob(database_path('migrations') . DIRECTORY_SEPARATOR . '*.php');
-        natsort($files);
-        $migs = [];
-        foreach ($files as $f) {
-            $migs[] = ['name' => basename($f), 'status' => 'pending'];
-        }
-
-        $initial = ['status' => 'running', 'started_at' => now()->toDateTimeString(), 'migrations' => $migs];
-        @file_put_contents($statusPath, json_encode($initial, JSON_PRETTY_PRINT));
-        @file_put_contents(storage_path('logs/install-migrate.log'), "[".now()->toDateTimeString()."] Queued migrations\n", FILE_APPEND);
-
-        try {
-            \App\Jobs\RunMigrationsJob::dispatch();
-            try { \Illuminate\Support\Facades\Log::info('dbMigrateStart dispatched RunMigrationsJob'); } catch (\Exception $__) {}
-            return response()->json(['success' => true, 'message' => 'Migration started (queued)', 'queue_driver' => config('queue.default')]);
-        } catch (\Exception $ex) {
-            try { \Illuminate\Support\Facades\Log::error('dbMigrateStart dispatch failed', ['error' => $ex->getMessage()]); } catch (\Exception $__) {}
-            return response()->json(['success' => false, 'message' => 'Failed to dispatch migration job: ' . $ex->getMessage()], 500);
-        }
+        abort(410, 'Installer removed');
     }
 
     public function dbMigrateStatus(Request $request)
     {
-        $statusPath = storage_path('app/install_migrate_status.json');
-        $logPath = storage_path('logs/install-migrate.log');
-        $status = ['status' => 'unknown'];
-
-        if (file_exists($statusPath)) {
-            $raw = @file_get_contents($statusPath);
-            if ($raw) {
-                $decoded = json_decode($raw, true);
-                if (is_array($decoded)) {
-                    $status = $decoded;
-                }
-            }
-        }
-
-        // Read tail of log
-        $logTail = null;
-        if (file_exists($logPath)) {
-            $contents = file_get_contents($logPath);
-            $logTail = substr($contents, -4000);
-        }
-
-        return response()->json(['status' => $status, 'log' => $logTail]);
+        abort(410, 'Installer removed');
     }
 
     /**
@@ -235,52 +53,12 @@ class InstallController extends Controller
      */
     public function listMigrations(Request $request)
     {
-        try {
-            $files = glob(database_path('migrations') . DIRECTORY_SEPARATOR . '*.php');
-            natsort($files);
-            $migs = [];
-            foreach ($files as $f) {
-                $migs[] = ['name' => basename($f), 'status' => 'pending'];
-            }
-
-            // If there is an existing status file, merge statuses
-            $statusPath = storage_path('app/install_migrate_status.json');
-            if (file_exists($statusPath)) {
-                $raw = @file_get_contents($statusPath);
-                $decoded = json_decode($raw, true) ?: [];
-                if (isset($decoded['migrations']) && is_array($decoded['migrations'])) {
-                    $map = [];
-                    foreach ($decoded['migrations'] as $m) { $map[$m['name']] = $m['status'] ?? 'pending'; }
-                    foreach ($migs as $idx => $m) {
-                        if (isset($map[$m['name']])) $migs[$idx]['status'] = $map[$m['name']];
-                    }
-                }
-            }
-
-            return response()->json(['success' => true, 'migrations' => $migs]);
-        } catch (\Exception $e) {
-            try { \Illuminate\Support\Facades\Log::error('listMigrations failed', ['error' => $e->getMessage()]); } catch (\Exception $__e) {}
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
+        abort(410, 'Installer removed');
     }
 
     public function queueWorkOnce(Request $request)
     {
-        try {
-            \Illuminate\Support\Facades\Log::info('queueWorkOnce called', ['ip' => $request->ip()]);
-        } catch (\Exception $__e) {}
-
-        try {
-            // Increase time limit for the request while the worker runs
-            @set_time_limit(300);
-            Artisan::call('queue:work', ['--once' => true, '--tries' => 1]);
-            $output = Artisan::output();
-            try { \Illuminate\Support\Facades\Log::info('queueWorkOnce output', ['output' => substr($output,0,2000)]); } catch (\Exception $__e) {}
-            return response()->json(['success' => true, 'message' => 'Worker run once', 'output' => $output]);
-        } catch (\Exception $e) {
-            try { \Illuminate\Support\Facades\Log::error('queueWorkOnce failed', ['error' => $e->getMessage()]); } catch (\Exception $__e) {}
-            return response()->json(['success' => false, 'message' => 'Failed to run worker: ' . $e->getMessage()], 500);
-        }
+        abort(410, 'Installer removed');
     }
 
     public function install(Request $request)
