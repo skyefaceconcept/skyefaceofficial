@@ -27,6 +27,14 @@ return new class extends Migration
             $table->timestamp('completed_at')->nullable();
             $table->decimal('cost_estimate', 10, 2)->nullable();
             $table->decimal('cost_actual', 10, 2)->nullable();
+
+            // Payment related fields (merged from add_payment_fields_to_repairs_table)
+            $table->string('payment_status')->default('pending')->after('cost_actual');
+            $table->timestamp('payment_verified_at')->nullable()->after('payment_status');
+            $table->string('payment_reference')->nullable()->after('payment_verified_at');
+            $table->string('payment_processor')->nullable()->after('payment_reference');
+            $table->unsignedBigInteger('payment_id')->nullable()->after('payment_processor');
+
             $table->text('notes')->nullable();
             $table->timestamps();
 
@@ -35,6 +43,17 @@ return new class extends Migration
             $table->index('customer_email');
             $table->index('status');
             $table->index('created_at');
+            // Indexes for payment lookup
+            try {
+                $table->index('payment_reference');
+            } catch (\Exception $e) {
+                // ignore if DB doesn't support or index exists
+            }
+            try {
+                $table->index('payment_id');
+            } catch (\Exception $e) {
+                // ignore
+            }
         });
     }
 

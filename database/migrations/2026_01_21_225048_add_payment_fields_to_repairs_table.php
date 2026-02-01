@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Already merged into create_repairs_table — no-op if these columns exist
+        if (Schema::hasTable('repairs') && Schema::hasColumn('repairs', 'payment_status') && Schema::hasColumn('repairs', 'payment_reference') && Schema::hasColumn('repairs', 'payment_processor')) {
+            return;
+        }
+
         Schema::table('repairs', function (Blueprint $table) {
             // Add payment fields if they don't exist
             if (!Schema::hasColumn('repairs', 'payment_status')) {
@@ -24,6 +29,9 @@ return new class extends Migration
             }
             if (!Schema::hasColumn('repairs', 'payment_processor')) {
                 $table->string('payment_processor')->nullable()->after('payment_reference');
+            }
+            if (!Schema::hasColumn('repairs', 'payment_id')) {
+                $table->unsignedBigInteger('payment_id')->nullable()->after('payment_processor');
             }
         });
     }

@@ -11,27 +11,41 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // If indexes are already present or columns missing, do nothing
+        if (! Schema::hasTable('repairs')) {
+            return;
+        }
+
+        // if both indexes exist already, early return
+        $hasPaymentReferenceIndex = false;
+        $hasPaymentIdIndex = false;
+        try {
+            // Some DB drivers may not implement hasIndex; these checks may be best-effort
+            $hasPaymentReferenceIndex = Schema::hasIndex('repairs', 'repairs_payment_reference_index');
+            $hasPaymentIdIndex = Schema::hasIndex('repairs', 'repairs_payment_id_index');
+        } catch (\Throwable $t) {
+            // ignore and continue
+        }
+
+        if ($hasPaymentReferenceIndex && $hasPaymentIdIndex) {
+            return;
+        }
+
         Schema::table('repairs', function (Blueprint $table) {
             // Add indexes for payment lookups
-            if (!Schema::hasColumn('repairs', 'payment_reference')) {
-                // Column doesn't exist, skip
-            } else {
-                // Add index to payment_reference if it doesn't exist
+            if (Schema::hasColumn('repairs', 'payment_reference') && !isset($hasPaymentReferenceIndex)) {
                 try {
                     $table->index('payment_reference');
                 } catch (\Exception $e) {
-                    // Index might already exist, skip
+                    // Index might already exist or be invalid; skip
                 }
             }
 
-            if (!Schema::hasColumn('repairs', 'payment_id')) {
-                // Column doesn't exist, skip
-            } else {
-                // Add index to payment_id if it doesn't exist
+            if (Schema::hasColumn('repairs', 'payment_id') && !isset($hasPaymentIdIndex)) {
                 try {
                     $table->index('payment_id');
                 } catch (\Exception $e) {
-                    // Index might already exist, skip
+                    // Index might already exist or be invalid; skip
                 }
             }
         });

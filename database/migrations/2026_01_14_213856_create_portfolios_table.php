@@ -25,6 +25,10 @@ return new class extends Migration
             // Festive discount fields (merged from add migration)
             $table->boolean('festive_discount_enabled')->default(false);
             $table->decimal('festive_discount_percentage', 5, 2)->default(0);
+            // License pricing (merged from add_license_pricing migration)
+            $table->decimal('price_6months', 10, 2)->nullable();
+            $table->decimal('price_1year', 10, 2)->nullable();
+            $table->decimal('price_2years', 10, 2)->nullable();
             $table->timestamps();
 
             $table->index('category');

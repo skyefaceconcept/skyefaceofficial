@@ -11,10 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Already merged into create_company_settings_table — no-op if fields exist
+        if (Schema::hasTable('company_settings') && Schema::hasColumn('company_settings', 'company_name') && Schema::hasColumn('company_settings', 'cac_number') && Schema::hasColumn('company_settings', 'rc_number')) {
+            return;
+        }
+
         Schema::table('company_settings', function (Blueprint $table) {
-            $table->string('company_name')->nullable()->after('show_menu_offer_image');
-            $table->string('cac_number')->nullable()->after('company_name');
-            $table->string('rc_number')->nullable()->after('cac_number');
+            if (! Schema::hasColumn('company_settings', 'company_name')) {
+                $table->string('company_name')->nullable()->after('show_menu_offer_image');
+            }
+            if (! Schema::hasColumn('company_settings', 'cac_number')) {
+                $table->string('cac_number')->nullable()->after('company_name');
+            }
+            if (! Schema::hasColumn('company_settings', 'rc_number')) {
+                $table->string('rc_number')->nullable()->after('cac_number');
+            }
         });
     }
 
