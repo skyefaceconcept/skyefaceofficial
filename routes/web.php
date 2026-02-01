@@ -22,6 +22,20 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\VerifyEmail;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\InstallController;
+
+// If the application has not yet been installed (no installed lock file),
+// expose an interactive installer and redirect all other routes to it
+if (! file_exists(storage_path('app/installed'))) {
+    Route::get('/install', [InstallController::class, 'show'])->name('install.show');
+    Route::post('/install', [InstallController::class, 'install'])->name('install.post');
+
+    // Redirect everything else to the installer, but allow common endpoints used
+    // during setup (payment callbacks, api routes, branding assets, test-email)
+    Route::any('{any}', function () {
+        return redirect()->route('install.show');
+    })->where('any', '^(?!install|payment|api|branding|storage|test-email).*$');
+}
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 

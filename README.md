@@ -54,6 +54,18 @@ In order to ensure that the Laravel community is welcoming to all, please review
 
 If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
+## Installation (first-time run)
+
+This project includes a simple web-based installer that runs automatically on first load if the application has not been installed yet.
+
+- Visit: `GET /install` to view the installer (will also be shown automatically when the app detects it is not yet installed).
+- The installer can generate an `APP_KEY`, write basic `DB_` settings into `.env`, attempt to run migrations and create an initial admin user.
+- On success a small lockfile is written to `storage/app/installed` and the application will stop showing the installer.
+
+Tip: If you need to re-run the installer delete `storage/app/installed` and make sure your `.env` is writable.
+
+---
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
