@@ -14,7 +14,27 @@ class InstallController extends Controller
 {
     public function show(\Illuminate\Http\Request $request)
     {
-        abort(410, 'Installer removed');
+        // Serve static installer pages (safe, simple fallback to repo-provided HTML)
+        $step = (int) $request->query('step', 1);
+        $candidates = [
+            base_path("install_step{$step}.html"),
+            base_path('install_page.html'),
+        ];
+
+        $path = null;
+        foreach ($candidates as $p) {
+            if (file_exists($p)) { $path = $p; break; }
+        }
+
+        if (! $path) {
+            return response()->view('install')->header('Content-Type', 'text/html');
+        }
+
+        $html = file_get_contents($path);
+        // Inject a fresh CSRF token and make URLs relative so it works regardless of host
+        $html = str_replace('hHYuFuaFU7dOfkNFCe2ZRJuyRjcBWVX138iHXUsk', csrf_token(), $html);
+        $html = str_replace('http://127.0.0.1:8000', '', $html);
+        return response($html)->header('Content-Type', 'text/html');
     }
 
     /**
@@ -22,7 +42,39 @@ class InstallController extends Controller
      */
     public function dbCreate(\Illuminate\Http\Request $request)
     {
-        abort(410, 'Installer removed');
+        $data = $request->validate([
+            'db_host' => 'required|string',
+            'db_port' => 'nullable|numeric',
+            'db_database' => 'required|string',
+            'db_username' => 'nullable|string',
+            'db_password' => 'nullable|string',
+            'persist' => 'nullable',
+        ]);
+
+        $host = $data['db_host'];
+        $port = $data['db_port'] ?: 3306;
+        $db = $data['db_database'];
+        $user = $data['db_username'] ?: 'root';
+        $pass = $data['db_password'] ?: '';
+
+        try {
+            $dsn = "mysql:host={$host};port={$port};charset=utf8mb4";
+            $pdo = new \PDO($dsn, $user, $pass, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+            $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+
+            if ($request->input('persist')) {
+                $this->setEnvValue('DB_CONNECTION', env('DB_CONNECTION', 'mysql'));
+                $this->setEnvValue('DB_HOST', $host);
+                $this->setEnvValue('DB_PORT', $port);
+                $this->setEnvValue('DB_DATABASE', $db);
+                $this->setEnvValue('DB_USERNAME', $user);
+                $this->setEnvValue('DB_PASSWORD', $pass);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Database created or already exists.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error creating database: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -30,22 +82,65 @@ class InstallController extends Controller
      */
     public function dbMigrate(Request $request)
     {
-        abort(410, 'Installer removed');
+        try {
+            Artisan::call('migrate', ['--force' => true]);
+            $output = Artisan::output();
+            return response()->json(['success' => true, 'message' => 'Migrations run successfully.', 'output' => $output]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Migrate failed: ' . $e->getMessage()], 500);
+        }
     }
 
     public function dbTest(\Illuminate\Http\Request $request)
     {
-        abort(410, 'Installer removed');
+        $data = $request->validate([
+            'db_host' => 'required|string',
+            'db_port' => 'nullable|numeric',
+            'db_database' => 'required|string',
+            'db_username' => 'nullable|string',
+            'db_password' => 'nullable|string',
+        ]);
+
+        $host = $data['db_host'];
+        $port = $data['db_port'] ?: 3306;
+        $db = $data['db_database'];
+        $user = $data['db_username'] ?: 'root';
+        $pass = $data['db_password'] ?: '';
+
+        try {
+            $dsn = "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
+            $pdo = new \PDO($dsn, $user, $pass, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+            return response()->json(['success' => true, 'message' => 'Connection successful.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Connection failed: ' . $e->getMessage()], 422);
+        }
     }
 
     public function dbMigrateStart(Request $request)
     {
-        abort(410, 'Installer removed');
+        try {
+            $proc = new Process(['php', base_path('artisan'), 'install:migrate-start']);
+            $proc->setTimeout(0);
+            $proc->start();
+            return response()->json(['success' => true, 'message' => 'Background migration started.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to start migration: ' . $e->getMessage()], 500);
+        }
     }
 
     public function dbMigrateStatus(Request $request)
     {
-        abort(410, 'Installer removed');
+        $statusPath = storage_path('app/install_migrate_status.json');
+        if (! file_exists($statusPath)) {
+            return response()->json(['status' => 'none']);
+        }
+        try {
+            $raw = file_get_contents($statusPath);
+            $json = json_decode($raw, true);
+            return response()->json($json);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -53,12 +148,26 @@ class InstallController extends Controller
      */
     public function listMigrations(Request $request)
     {
-        abort(410, 'Installer removed');
+        $files = glob(database_path('migrations') . DIRECTORY_SEPARATOR . '*.php');
+        natsort($files);
+        $m = [];
+        foreach ($files as $f) {
+            $m[] = basename($f);
+        }
+        return response()->json(['migrations' => array_values($m)]);
     }
 
     public function queueWorkOnce(Request $request)
     {
-        abort(410, 'Installer removed');
+        try {
+            $proc = new Process(['php', base_path('artisan'), 'queue:work', '--once']);
+            $proc->setTimeout(0);
+            $proc->run();
+            $out = $proc->getOutput() . $proc->getErrorOutput();
+            return response()->json(['success' => true, 'output' => $out]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     public function install(Request $request)

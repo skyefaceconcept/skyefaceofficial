@@ -22,12 +22,20 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\VerifyEmail;
 use App\Http\Controllers\Admin\OrderController;
-// Installer removed - InstallController import removed
+use App\Http\Controllers\InstallController;
 
-// Installer removed. Installation routes and redirects were intentionally deleted.
-// If you need to re-enable the installer in future, restore the installer routes and files from the repository history.
-
-// (Note: Previously the app redirected all requests to /install until installation was completed.)
+// Installer routes (re-enabled) — these endpoints support the first-time web installer when
+// storage/app/installed does not exist. If you prefer to run installation tasks manually
+// you can remove or secure these routes.
+Route::get('/install', [InstallController::class, 'show'])->name('install.show');
+Route::post('/install/db-test', [InstallController::class, 'dbTest'])->name('install.db.test');
+Route::post('/install/db-create', [InstallController::class, 'dbCreate'])->name('install.db.create');
+Route::post('/install/db-migrate', [InstallController::class, 'dbMigrate'])->name('install.db.migrate');
+Route::post('/install/db-migrate-start', [InstallController::class, 'dbMigrateStart'])->name('install.db.migrate-start');
+Route::get('/install/db-migrate-status', [InstallController::class, 'dbMigrateStatus'])->name('install.db.migrate-status');
+Route::get('/install/list-migrations', [InstallController::class, 'listMigrations'])->name('install.list-migrations');
+Route::post('/install/queue-work-once', [InstallController::class, 'queueWorkOnce'])->name('install.queue-work-once');
+Route::post('/install', [InstallController::class, 'install'])->name('install.perform');
 
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
