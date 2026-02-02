@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Installer</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <style>
         body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding: 2rem; }
         .container { max-width: 720px; margin: 0 auto; }
@@ -19,14 +19,14 @@
     </style>
 </head>
 <body>
-@php
+<?php
     $step = (int) request()->query('step', 1);
     $dbHost = env('DB_HOST', '127.0.0.1');
     $dbPort = env('DB_PORT', '3306');
     $dbDatabase = env('DB_DATABASE', '');
     $dbUsername = env('DB_USERNAME', '');
     $dbPassword = env('DB_PASSWORD', '');
-@endphp
+?>
 
 <div class="container">
     <script>const _csrf_meta = document.querySelector('meta[name="csrf-token"]'); const csrf = _csrf_meta ? _csrf_meta.getAttribute('content') : '';</script>
@@ -36,39 +36,39 @@
     <nav style="margin-top:1rem">
         <strong>Stage:</strong>
         <span style="margin-left:.5rem">
-            <a href="{{ route('install.show', ['step' => 1]) }}" style="font-weight: {{ $step===1 ? '700' : '400' }}">1. Database</a>
+            <a href="<?php echo e(route('install.show', ['step' => 1])); ?>" style="font-weight: <?php echo e($step===1 ? '700' : '400'); ?>">1. Database</a>
             &nbsp;•&nbsp;
-            <a href="{{ route('install.show', ['step' => 2]) }}" style="font-weight: {{ $step===2 ? '700' : '400' }}">2. Migrate</a>
+            <a href="<?php echo e(route('install.show', ['step' => 2])); ?>" style="font-weight: <?php echo e($step===2 ? '700' : '400'); ?>">2. Migrate</a>
             &nbsp;•&nbsp;
-            <a href="{{ route('install.show', ['step' => 3]) }}" style="font-weight: {{ $step===3 ? '700' : '400' }}">3. Admin</a>
+            <a href="<?php echo e(route('install.show', ['step' => 3])); ?>" style="font-weight: <?php echo e($step===3 ? '700' : '400'); ?>">3. Admin</a>
         </span>
     </nav>
 
-    @if ($step === 1)
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($step === 1): ?>
         <form id="db-form">
-            @csrf
+            <?php echo csrf_field(); ?>
             <label for="db_host">DB Host</label>
-            <input id="db_host" name="db_host" value="{{ old('db_host', $dbHost) }}" required />
+            <input id="db_host" name="db_host" value="<?php echo e(old('db_host', $dbHost)); ?>" required />
 
             <div class="row">
                 <div class="small">
                     <label for="db_port">DB Port</label>
-                    <input id="db_port" name="db_port" value="{{ old('db_port', $dbPort) }}" />
+                    <input id="db_port" name="db_port" value="<?php echo e(old('db_port', $dbPort)); ?>" />
                 </div>
                 <div class="small">
                     <label for="db_database">Database name</label>
-                    <input id="db_database" name="db_database" value="{{ old('db_database', $dbDatabase) }}" required />
+                    <input id="db_database" name="db_database" value="<?php echo e(old('db_database', $dbDatabase)); ?>" required />
                 </div>
             </div>
 
             <div class="row">
                 <div class="small">
                     <label for="db_username">DB username</label>
-                    <input id="db_username" name="db_username" value="{{ old('db_username', $dbUsername) }}" />
+                    <input id="db_username" name="db_username" value="<?php echo e(old('db_username', $dbUsername)); ?>" />
                 </div>
                 <div class="small">
                     <label for="db_password">DB password</label>
-                    <input id="db_password" name="db_password" value="{{ old('db_password', $dbPassword) }}" />
+                    <input id="db_password" name="db_password" value="<?php echo e(old('db_password', $dbPassword)); ?>" />
                 </div>
             </div>
 
@@ -90,8 +90,8 @@
             const createBtn = document.getElementById('db-create-btn');
             const testBtn = document.getElementById('db-test-btn');
             const message = document.getElementById('db-message');
-            const dbTestUrl = '{{ route('install.db.test') }}';
-            const dbCreateUrl = '{{ route('install.db.create') }}';
+            const dbTestUrl = '<?php echo e(route('install.db.test')); ?>';
+            const dbCreateUrl = '<?php echo e(route('install.db.create')); ?>';
 
             async function postForm(url, btn, label) {
                 message.style.color = 'black';
@@ -132,7 +132,7 @@
             createBtn.addEventListener('click', async () => {
                 const result = await postForm(dbCreateUrl, createBtn, 'Creating database');
                 if (result && result.success) {
-                    window.location = '{{ route('install.show', ['step' => 2]) }}';
+                    window.location = '<?php echo e(route('install.show', ['step' => 2])); ?>';
                 }
             });
 
@@ -140,12 +140,12 @@
                 const result = await postForm(dbTestUrl, testBtn, 'Testing connection');
                 if (result && result.success) {
                     message.textContent = result.message + '. Redirecting...';
-                    setTimeout(() => { window.location = '{{ route('install.show', ['step' => 2]) }}'; }, 900);
+                    setTimeout(() => { window.location = '<?php echo e(route('install.show', ['step' => 2])); ?>'; }, 900);
                 }
             });
         </script>
 
-    @elseif ($step === 2)
+    <?php elseif($step === 2): ?>
         <div style="margin-top:1rem">
             <h2>Migrate Database</h2>
             <p class="note">Run migrations to create tables and seeders. You can list migration files below and run selected ones or run all migrations.</p>
@@ -160,7 +160,7 @@
             </div>
 
             <div id="migrations-list" style="margin-top:1rem">
-                @php
+                <?php
                     $serverMigrations = glob(database_path('migrations') . DIRECTORY_SEPARATOR . '*.php');
                     if ($serverMigrations) {
                         natsort($serverMigrations);
@@ -168,16 +168,16 @@
                     } else {
                         $serverMigrations = [];
                     }
-                @endphp
-                @if (count($serverMigrations))
+                ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count($serverMigrations)): ?>
                     <form id="migrations-form"><div style="max-height:260px;overflow:auto;border:1px solid #eee;padding:8px">
-                    @foreach ($serverMigrations as $mfile)
-                        <label style="display:block"><input type="checkbox" name="migrations" value="{{ $mfile }}" /> {{ $mfile }}</label>
-                    @endforeach
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $serverMigrations; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mfile): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <label style="display:block"><input type="checkbox" name="migrations" value="<?php echo e($mfile); ?>" /> <?php echo e($mfile); ?></label>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </div></form>
-                @else
+                <?php else: ?>
                     <div class="note">No migration files found in <code>database/migrations</code></div>
-                @endif
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
 
             <div id="migrate-message" style="margin-top:1rem"></div>
@@ -185,7 +185,7 @@
             <div style="display:flex;gap:.5rem;align-items:center;margin-top:1rem">
                 <button id="migrate-selected" class="btn" type="button">Run Selected</button>
                 <button id="migrate-all" class="btn" type="button">Run All (artisan migrate)</button>
-                <a class="btn secondary" href="{{ url('/') }}">Back to site</a>
+                <a class="btn secondary" href="<?php echo e(url('/')); ?>">Back to site</a>
             </div>
         </div>
         <script>
@@ -198,7 +198,7 @@
             async function listMigrations() {
                 listBtn.disabled = true; listArea.textContent = 'Loading...';
                 try {
-                    const res = await fetch('{{ route('install.list-migrations') }}', { credentials: 'same-origin' });
+                    const res = await fetch('<?php echo e(route('install.list-migrations')); ?>', { credentials: 'same-origin' });
                     if (!res.ok) {
                         let errText = `Error ${res.status} ${res.statusText}`;
                         try { const errJson = await res.json(); errText = errJson.message || JSON.stringify(errJson); } catch (_) { try { errText = await res.text(); } catch(_){} }
@@ -260,7 +260,7 @@
                 if (checked.length === 0) { migrateMessage.style.color = 'crimson'; migrateMessage.textContent = 'Select one or more migration files to run.'; return; }
                 migrateSelectedBtn.disabled = true; migrateMessage.style.color = 'black'; migrateMessage.textContent = 'Running selected migrations...';
                 try {
-                    const res = await fetch('{{ route('install.db.migrate-files') }}', {
+                    const res = await fetch('<?php echo e(route('install.db.migrate-files')); ?>', {
                         method: 'POST',
                         headers: {'X-CSRF-TOKEN': csrf, 'Accept':'application/json','Content-Type':'application/json'},
                         credentials: 'same-origin',
@@ -294,7 +294,7 @@
             migrateAllBtn.addEventListener('click', async function () {
                 this.disabled = true; migrateMessage.style.color = 'black'; migrateMessage.textContent = 'Running full migrations via Artisan...';
                 try {
-                    const res = await fetch('{{ route('install.db.migrate') }}', { method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Accept':'application/json'}, credentials:'same-origin' });
+                    const res = await fetch('<?php echo e(route('install.db.migrate')); ?>', { method: 'POST', headers: {'X-CSRF-TOKEN': csrf, 'Accept':'application/json'}, credentials:'same-origin' });
                     if (!res.ok) {
                         let errText = 'Migrate failed';
                         try { const errJson = await res.json(); errText = errJson.message || JSON.stringify(errJson); } catch (_) { errText = res.status + ' ' + res.statusText; }
@@ -308,36 +308,36 @@
             });
         </script>
 
-    @elseif ($step === 3)
+    <?php elseif($step === 3): ?>
         <div style="margin-top:1rem">
             <h2>Create Admin</h2>
             <p class="note">Create the initial admin user with SuperAdmin role to finish setup.</p>
 
-            @if ($errors->any())
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($errors->any()): ?>
                 <div style="color:crimson;margin-top:1rem">
                     <strong>Errors:</strong>
                     <ul>
-                        @foreach ($errors->all() as $err)
-                            <li>{{ $err }}</li>
-                        @endforeach
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $err): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <li><?php echo e($err); ?></li>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </ul>
                 </div>
-            @endif
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-            <form method="POST" action="{{ route('install.perform') }}">
-                @csrf
+            <form method="POST" action="<?php echo e(route('install.perform')); ?>">
+                <?php echo csrf_field(); ?>
 
                 <label for="site_title">Site Title (optional)</label>
-                <input id="site_title" name="site_title" value="{{ old('site_title') }}" />
+                <input id="site_title" name="site_title" value="<?php echo e(old('site_title')); ?>" />
 
                 <label for="admin_name">Full name</label>
-                <input id="admin_name" name="admin_name" value="{{ old('admin_name') }}" required />
+                <input id="admin_name" name="admin_name" value="<?php echo e(old('admin_name')); ?>" required />
 
                 <label for="admin_username">Username</label>
-                <input id="admin_username" name="admin_username" value="{{ old('admin_username') }}" required />
+                <input id="admin_username" name="admin_username" value="<?php echo e(old('admin_username')); ?>" required />
 
                 <label for="admin_email">Email</label>
-                <input id="admin_email" name="admin_email" type="email" value="{{ old('admin_email') }}" required />
+                <input id="admin_email" name="admin_email" type="email" value="<?php echo e(old('admin_email')); ?>" required />
 
                 <label for="admin_password">Password</label>
                 <input id="admin_password" name="admin_password" type="password" required />
@@ -348,7 +348,7 @@
                 <div style="margin-top:1rem"><button class="btn" type="submit">Create SuperAdmin & Finish Install</button></div>
             </form>
         </div>
-    @endif
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
 </div>
 </body>
@@ -358,3 +358,4 @@
 
 
 
+<?php /**PATH C:\laragon\www\Skyefaceofficial\resources\views/install.blade.php ENDPATH**/ ?>

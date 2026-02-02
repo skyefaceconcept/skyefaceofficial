@@ -47,6 +47,19 @@ class AppServiceProvider extends ServiceProvider
         $router->aliasMiddleware('is.superadmin', IsSuperAdmin::class);
         $router->aliasMiddleware('redirect.superadmin', RedirectSuperAdminToDashboard::class);
 
+        // Register DB check middleware so requests gracefully redirect to installer when DB is not reachable
+        try {
+            $router->aliasMiddleware('check.db.installed', \App\Http\Middleware\RedirectIfNoDatabase::class);
+            // Prefer prepending the middleware so it executes before other web middleware (ensures early redirect to installer when DB unavailable)
+            if (method_exists($router, 'prependMiddlewareToGroup')) {
+                $router->prependMiddlewareToGroup('web', \App\Http\Middleware\RedirectIfNoDatabase::class);
+            } else {
+                $router->pushMiddlewareToGroup('web', \App\Http\Middleware\RedirectIfNoDatabase::class);
+            }
+        } catch (\Throwable $e) {
+            // ignore if pushing middleware not supported in this environment
+        }
+
         // Push site mode middleware into the web group so it runs for all web requests
         try {
             $router->pushMiddlewareToGroup('web', CheckSiteMode::class);

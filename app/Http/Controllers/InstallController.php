@@ -16,6 +16,12 @@ class InstallController extends Controller
     {
         // Serve static installer pages (safe, simple fallback to repo-provided HTML)
         $step = (int) $request->query('step', 1);
+
+        // Prefer Blade view for step 2 and 3 so the migrations list and admin form are always shown to the user
+        if ($step === 2 || $step === 3) {
+            return response()->view('install')->header('Content-Type', 'text/html');
+        }
+
         $candidates = [
             base_path("install_step{$step}.html"),
             base_path('install_page.html'),
@@ -155,6 +161,50 @@ class InstallController extends Controller
             $m[] = basename($f);
         }
         return response()->json(['migrations' => array_values($m)]);
+    }
+
+    /**
+     * Run specific migration files by basename (from installer UI).
+     * Accepts JSON { files: ["2026_01_01_000000_create_users_table.php", ...] }
+     */
+    public function dbMigrateFiles(Request $request)
+    {
+        \Log::info('InstallController::dbMigrateFiles called', ['path' => $request->path(), 'headers' => $request->headers->all(), 'body' => $request->all()]);
+        // Validate manually so API callers receive JSON errors instead of redirects
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'files' => 'required|array|min:1',
+            'files.*' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()->all()], 422);
+        }
+
+        $data = $validator->validated();
+
+        $available = glob(database_path('migrations') . DIRECTORY_SEPARATOR . '*.php');
+        $availableBasenames = array_map('basename', $available);
+
+        $results = [];
+        foreach ($data['files'] as $file) {
+            // Security: only allow running migrations that exist in the migrations folder
+            if (! in_array($file, $availableBasenames, true)) {
+                $results[$file] = ['success' => false, 'message' => 'Migration file not found or not allowed.'];
+                continue;
+            }
+
+            try {
+                // Use artisan migrate --path option (relative path from base)
+                $relative = 'database/migrations/' . $file;
+                Artisan::call('migrate', ['--path' => $relative, '--force' => true]);
+                $out = Artisan::output();
+                $results[$file] = ['success' => true, 'output' => $out];
+            } catch (\Exception $e) {
+                $results[$file] = ['success' => false, 'message' => $e->getMessage()];
+            }
+        }
+
+        return response()->json(['results' => $results]);
     }
 
     public function queueWorkOnce(Request $request)

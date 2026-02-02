@@ -24,18 +24,23 @@ use App\Mail\VerifyEmail;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\InstallController;
 
-// Installer routes (re-enabled) — these endpoints support the first-time web installer when
-// storage/app/installed does not exist. If you prefer to run installation tasks manually
-// you can remove or secure these routes.
-Route::get('/install', [InstallController::class, 'show'])->name('install.show');
-Route::post('/install/db-test', [InstallController::class, 'dbTest'])->name('install.db.test');
-Route::post('/install/db-create', [InstallController::class, 'dbCreate'])->name('install.db.create');
-Route::post('/install/db-migrate', [InstallController::class, 'dbMigrate'])->name('install.db.migrate');
-Route::post('/install/db-migrate-start', [InstallController::class, 'dbMigrateStart'])->name('install.db.migrate-start');
-Route::get('/install/db-migrate-status', [InstallController::class, 'dbMigrateStatus'])->name('install.db.migrate-status');
-Route::get('/install/list-migrations', [InstallController::class, 'listMigrations'])->name('install.list-migrations');
-Route::post('/install/queue-work-once', [InstallController::class, 'queueWorkOnce'])->name('install.queue-work-once');
-Route::post('/install', [InstallController::class, 'install'])->name('install.perform');
+// Installer routes (re-enabled when not already installed). Routes that accept POST
+// requests bypass CSRF to avoid a bootstrap chicken-and-egg when sessions DB is absent.
+if (! file_exists(storage_path('app/installed'))) {
+    Route::get('/install', [InstallController::class, 'show'])->name('install.show');
+    Route::post('/install/db-test', [InstallController::class, 'dbTest'])->name('install.db.test')->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+    Route::post('/install/db-create', [InstallController::class, 'dbCreate'])->name('install.db.create')->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+    Route::post('/install/db-migrate', [InstallController::class, 'dbMigrate'])->name('install.db.migrate')->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+    Route::post('/install/db-migrate-start', [InstallController::class, 'dbMigrateStart'])->name('install.db.migrate-start')->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+    Route::post('/install/db-migrate-files', [InstallController::class, 'dbMigrateFiles'])->name('install.db.migrate-files')->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+    Route::get('/install/db-migrate-status', [InstallController::class, 'dbMigrateStatus'])->name('install.db.migrate-status');
+    Route::get('/install/list-migrations', [InstallController::class, 'listMigrations'])->name('install.list-migrations');
+    Route::post('/install/queue-work-once', [InstallController::class, 'queueWorkOnce'])->name('install.queue-work-once')->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+    Route::post('/install', [InstallController::class, 'install'])->name('install.perform')->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+} else {
+    // Return a simple page informing installer is removed
+    Route::get('/install', function () { return response()->view('install')->header('Content-Type', 'text/html'); });
+}
 
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
