@@ -211,14 +211,27 @@
             </a>
           </li>
           @endpermission
+
+          {{-- @permission('view_settings')
+          <li class="nav-item">
+            <a class="nav-link" href="{{ route('admin.settings.payment_processors') }}">
+              <i class="menu-icon mdi mdi-credit-card"></i>
+              <span>Payment Processors</span>
+            </a>
+          </li>
+          @endpermission --}}
+
+          @permission('view_settings')
+          <li class="nav-item">
+            <a class="nav-link" href="{{ route('admin.settings.migrations') }}">
+              <i class="menu-icon mdi mdi-database"></i>
+              <span>Migrations</span>
+            </a>
+          </li>
+          @endpermission
         </ul>
       </div>
     </li>
     @endpermission
-
-    @php
-      $user = auth()->user();
-      $isSuper = $user && optional($user->role)->name === 'SuperAdmin';
-    @endphp
   </ul>
 </nav>

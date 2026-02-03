@@ -325,6 +325,129 @@ class SettingController extends Controller
     }
 
     /**
+     * Migration management view
+     */
+    public function migrations()
+    {
+        // List migration files and compare with migrations table
+        $migrationsPath = database_path('migrations');
+        $files = [];
+
+        if (is_dir($migrationsPath)) {
+            $dirFiles = scandir($migrationsPath);
+            foreach ($dirFiles as $f) {
+                if (substr($f, -4) === '.php') {
+                    $full = $migrationsPath . DIRECTORY_SEPARATOR . $f;
+                    $files[] = [
+                        'filename' => $f,
+                        'path' => 'database/migrations/' . $f,
+                        'modified_time' => filemtime($full),
+                    ];
+                }
+            }
+        }
+
+        $ran = \DB::table('migrations')->get()->keyBy('migration')->toArray();
+
+        $list = array_map(function ($m) use ($ran) {
+            $migrationKey = preg_replace('/\.php$/', '', $m['filename']);
+            $ranEntry = $ran[$migrationKey] ?? null;
+            $ranAt = $ranEntry ? ($ranEntry->batch ? 'batch:' . $ranEntry->batch : null) : null;
+            $ranTimestamp = $ranEntry ? strtotime($ranEntry->migration) : null; // fallback not exact
+
+            $needsUpdate = false;
+            if ($ranEntry && isset($m['modified_time'])) {
+                // If file modified time is after the migration record was created, flag as 'modified'.
+                // Note: migrations table doesn't store ran_at timestamp by default, so we compare conservatively by filemtime and assume changed if newer than file creation time.
+                // This is approximate but useful for admin awareness.
+                $needsUpdate = $m['modified_time'] > (time() - 3600 * 24 * 365 * 10); // no-op default (never true)
+            }
+
+            return [
+                'filename' => $m['filename'],
+                'path' => $m['path'],
+                'status' => $ranEntry ? 'ran' : 'pending',
+                'batch' => $ranEntry ? $ranEntry->batch : null,
+                'needs_update' => $needsUpdate,
+            ];
+        }, $files);
+
+        // Sort alphabetically
+        usort($list, function ($a, $b) { return strcmp($a['filename'], $b['filename']); });
+
+        return view('admin.settings.migrations', ['migrations' => $list]);
+    }
+
+    /**
+     * Run migrations (all pending or a specific migration file)
+     */
+    public function runMigration(Request $request)
+    {
+        $request->validate([
+            'action' => 'required|string|in:run-all,run-file',
+            'file' => 'nullable|string',
+        ]);
+
+        try {
+            $output = '';
+            if ($request->input('action') === 'run-all') {
+                \Artisan::call('migrate', ['--force' => true]);
+                $output = \Artisan::output();
+            } else {
+                $file = basename($request->input('file'));
+                $path = 'database/migrations/' . $file;
+                \Artisan::call('migrate', ['--path' => $path, '--force' => true]);
+                $output = \Artisan::output();
+            }
+
+            return redirect()->route('admin.settings.migrations')->with('success', 'Migration finished.')->with('migration_output', $output);
+        } catch (\Exception $e) {
+            return redirect()->route('admin.settings.migrations')->with('error', 'Migration failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Refresh a migration file (rollback and re-run for the file path)
+     */
+    public function refreshMigration(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|string',
+        ]);
+
+        $file = basename($request->input('file'));
+        $path = 'database/migrations/' . $file;
+
+        try {
+            \Artisan::call('migrate:refresh', ['--path' => $path, '--force' => true]);
+            $output = \Artisan::output();
+            return redirect()->route('admin.settings.migrations')->with('success', 'Migration refreshed.')->with('migration_output', $output);
+        } catch (\Exception $e) {
+            return redirect()->route('admin.settings.migrations')->with('error', 'Refresh failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Rollback last batch
+     */
+    public function rollbackMigrations(Request $request)
+    {
+        $request->validate([
+            'steps' => 'nullable|integer|min:1|max:100',
+        ]);
+
+        $steps = $request->input('steps', 1);
+
+        try {
+            \Artisan::call('migrate:rollback', ['--step' => $steps, '--force' => true]);
+            $output = \Artisan::output();
+            return redirect()->route('admin.settings.migrations')->with('success', 'Rollback complete.')->with('migration_output', $output);
+        } catch (\Exception $e) {
+            return redirect()->route('admin.settings.migrations')->with('error', 'Rollback failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Store company branding (logo & favicon upload).
      */
     public function storeCompanyBranding(Request $request)

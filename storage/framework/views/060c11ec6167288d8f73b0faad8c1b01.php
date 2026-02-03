@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ $title ?? config('app.name') }} - Scheduled Maintenance</title>
+  <title><?php echo e($title ?? config('app.name')); ?> - Scheduled Maintenance</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
@@ -425,11 +425,12 @@
 
     <h1>
       We'll Be Back Shortly
-      <strong>{{ $title ?? config('app.name') }}</strong>
+      <strong><?php echo e($title ?? config('app.name')); ?></strong>
     </h1>
 
     <p class="subtitle">
-      {{ $message ?? 'We\'re performing critical system upgrades to enhance performance, security, and your overall experience. We apologize for the temporary inconvenience.' }}
+      <?php echo e($message ?? 'We\'re performing critical system upgrades to enhance performance, security, and your overall experience. We apologize for the temporary inconvenience.'); ?>
+
     </p>
 
     <div class="progress-section">
@@ -461,7 +462,7 @@
     <div class="info-section">
       <h3>Questions or Urgent Need?</h3>
       <div class="contact-link">
-        Contact our support team at <a href="mailto:{{ config('app.support_email', 'support@example.com') }}">{{ config('app.support_email', 'support@example.com') }}</a> or call <strong>+234 806 212 1410</strong>
+        Contact our support team at <a href="mailto:<?php echo e(config('app.support_email', 'support@example.com')); ?>"><?php echo e(config('app.support_email', 'support@example.com')); ?></a> or call <strong>+234 806 212 1410</strong>
         — <a href="#" id="admin-login-link" style="color:#991b1b; font-weight:700; text-decoration:underline; margin-left:8px;">Admin Login</a>
       </div>
     </div>
@@ -483,23 +484,37 @@
       <div class="sf-modal" role="document">
         <h3>Admin Login</h3>
 
-        @if ($errors && $errors->any())
-          <div class="sf-error">{{ $errors->first() }}</div>
-        @endif
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($errors && $errors->any()): ?>
+          <div class="sf-error"><?php echo e($errors->first()); ?></div>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-        <form method="POST" action="{{ route('login') }}">
-          @csrf
+        <form method="POST" action="<?php echo e(route('login')); ?>">
+          <?php echo csrf_field(); ?>
 
           <div class="field">
             <label for="login" style="display:block; font-size:13px; margin-bottom:6px;">Email or Username</label>
-            <input id="login" name="username" type="text" autofocus value="{{ old('username') }}" autocomplete="username" />
-            @error('username') <div class="sf-error">{{ $message }}</div> @enderror
+            <input id="login" name="username" type="text" autofocus value="<?php echo e(old('username')); ?>" autocomplete="username" />
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['username'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <div class="sf-error"><?php echo e($message); ?></div> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
           </div>
 
           <div class="field">
             <label for="password" style="display:block; font-size:13px; margin-bottom:6px;">Password</label>
             <input id="password" name="password" type="password" autocomplete="current-password" />
-            @error('password') <div class="sf-error">{{ $message }}</div> @enderror
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <div class="sf-error"><?php echo e($message); ?></div> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
           </div>
 
           <div class="actions">
@@ -523,12 +538,13 @@
         if(close){ close.addEventListener('click', closeModal); }
         modal.addEventListener('click', function(e){ if(e.target === modal) closeModal(); });
 
-        @if (session()->has('errors') && session('errors')->any())
+        <?php if(session()->has('errors') && session('errors')->any()): ?>
           openModal();
-        @endif
+        <?php endif; ?>
 
       })();
     </script>
   </div>
 </body>
 </html>
+<?php /**PATH C:\laragon\www\Skyefaceofficial\resources\views/maintenance.blade.php ENDPATH**/ ?>

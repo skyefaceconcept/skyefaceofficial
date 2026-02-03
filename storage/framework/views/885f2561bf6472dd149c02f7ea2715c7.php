@@ -211,15 +211,21 @@
             </a>
           </li>
           <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+          
+
+          <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('permission', 'view_settings')): ?>
+          <li class="nav-item">
+            <a class="nav-link" href="<?php echo e(route('admin.settings.migrations')); ?>">
+              <i class="menu-icon mdi mdi-database"></i>
+              <span>Migrations</span>
+            </a>
+          </li>
+          <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </ul>
       </div>
     </li>
     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-
-    <?php
-      $user = auth()->user();
-      $isSuper = $user && optional($user->role)->name === 'SuperAdmin';
-    ?>
   </ul>
 </nav>
 <?php /**PATH C:\laragon\www\Skyefaceofficial\resources\views/admin/components/sidebar.blade.php ENDPATH**/ ?>

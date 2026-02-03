@@ -41,6 +41,9 @@
         <a href="<?php echo e(route('admin.settings.email_deliverability')); ?>" class="list-group-item list-group-item-action">
           <i class="fas fa-envelope mr-2"></i> Email Configuration
         </a>
+        <a href="<?php echo e(route('admin.settings.migrations')); ?>" class="list-group-item list-group-item-action">
+          <i class="fas fa-database mr-2"></i> Migrations
+        </a>
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('permission', 'backup_system')): ?>
         <a href="<?php echo e(route('admin.settings.backup')); ?>" class="list-group-item list-group-item-action">
           <i class="fas fa-download mr-2"></i> Backup & Restore

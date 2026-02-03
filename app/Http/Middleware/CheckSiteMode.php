@@ -21,8 +21,17 @@ class CheckSiteMode
             return $next($request);
         }
 
-        // Allow admin area and API/webhooks to function when site is in maintenance
-        if ($request->is('admin/*') || $request->is('api/*') || $request->is('payment/*')) {
+        // Allow admin area, auth routes, and API/webhooks to function when site is in maintenance
+        if (
+            $request->is('admin/*') ||
+            $request->is('api/*') ||
+            $request->is('payment/*') ||
+            // Allow the login/logout endpoints so SuperAdmin can sign in while site is down
+            $request->is('login') ||
+            $request->is('logout') ||
+            $request->is('login/*') ||
+            $request->is('two-factor/*')
+        ) {
             return $next($request);
         }
 

@@ -204,6 +204,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::post('/settings/email-deliverability/test', [SettingController::class, 'runEmailTests'])->name('settings.runEmailTests');
     Route::get('/settings/company-branding', [SettingController::class, 'companyBranding'])->name('settings.company_branding');
     Route::post('/settings/company-branding', [SettingController::class, 'storeCompanyBranding'])->name('settings.storeCompanyBranding');
+
+    // Migration management (Admin only)
+    Route::get('/settings/migrations', [SettingController::class, 'migrations'])->name('settings.migrations');
+    Route::post('/settings/migrations/run', [SettingController::class, 'runMigration'])->name('settings.migrations.run');
+    Route::post('/settings/migrations/refresh', [SettingController::class, 'refreshMigration'])->name('settings.migrations.refresh');
+    Route::post('/settings/migrations/rollback', [SettingController::class, 'rollbackMigrations'])->name('settings.migrations.rollback');
     Route::get('/settings/payment-processors', [SettingController::class, 'paymentProcessors'])->name('settings.payment_processors');
     Route::get('/settings/payment-processors/set-active', function () {
         return redirect()->route('admin.settings.payment_processors');

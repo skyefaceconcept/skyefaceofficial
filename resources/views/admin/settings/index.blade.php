@@ -42,6 +42,9 @@
         <a href="{{ route('admin.settings.email_deliverability') }}" class="list-group-item list-group-item-action">
           <i class="fas fa-envelope mr-2"></i> Email Configuration
         </a>
+        <a href="{{ route('admin.settings.migrations') }}" class="list-group-item list-group-item-action">
+          <i class="fas fa-database mr-2"></i> Migrations
+        </a>
         @permission('backup_system')
         <a href="{{ route('admin.settings.backup') }}" class="list-group-item list-group-item-action">
           <i class="fas fa-download mr-2"></i> Backup & Restore

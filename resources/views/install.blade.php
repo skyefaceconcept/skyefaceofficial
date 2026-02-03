@@ -248,10 +248,20 @@
                 for (const cb of form.querySelectorAll('input[name="migrations"]')) cb.checked = false;
             });
 
-            // Auto-list migrations when opening step 2 so the user sees files immediately
-            listMigrations();
-            // If server-side rendered form exists, ensure controls reflect it
-            updateMigrationControls();
+            // Defer initial listing until the window is fully loaded to avoid forced layout during page load
+            window.addEventListener('load', function() {
+                try {
+                    // run on next frame after load to avoid layout thrashing
+                    window.requestAnimationFrame(() => {
+                        listMigrations();
+                        updateMigrationControls();
+                    });
+                } catch (e) {
+                    // Fallback to calling directly if something goes wrong
+                    listMigrations();
+                    updateMigrationControls();
+                }
+            });
 
             migrateSelectedBtn.addEventListener('click', async function () {
                 const form = document.getElementById('migrations-form');
