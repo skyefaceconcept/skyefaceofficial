@@ -123,5 +123,10 @@ class AppServiceProvider extends ServiceProvider
             $perms = is_array($permission) ? $permission : [$permission];
             return Auth::user()->hasAnyPermission($perms);
         });
+
+        // Register SeoService for convenient injection
+        $this->app->singleton(\App\Services\SeoService::class, function ($app) {
+            return new \App\Services\SeoService();
+        });
     }
 }

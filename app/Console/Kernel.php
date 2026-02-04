@@ -16,6 +16,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('tickets:auto-close')
                  ->hourly()
                  ->withoutOverlapping();
+
+        // Generate sitemap daily
+        $schedule->command('sitemap:generate')
+                 ->daily()
+                 ->withoutOverlapping();
     }
 
     /**

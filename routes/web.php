@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\ContactTicketController;
+use App\Http\Controllers\Admin\SeoController as AdminSeoController;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Mail;
@@ -79,6 +80,21 @@ Route::post('/debug/checkout-test', function (\Illuminate\Http\Request $request)
 // Public Contact Form Route
 Route::get('/contact', function () { return view('contact'); })->name('contact.show');
 Route::post('/contact/send', [ContactController::class, 'store'])->name('contact.store');
+
+// Serve robots.txt dynamically (includes sitemap link)
+Route::get('/robots.txt', function () {
+    try {
+        $robots = \Spatie\RobotsTxt\Robots::create();
+        $robots->addUserAgent('*');
+        $robots->addAllow('/');
+        $robots->addSitemap(url('/sitemap.xml'));
+        return response($robots->toString(), 200)->header('Content-Type', 'text/plain');
+    } catch (\Throwable $e) {
+        // Fallback: return a basic robots file
+        $content = "User-agent: *\nAllow: /\nSitemap: " . url('/sitemap.xml');
+        return response($content, 200)->header('Content-Type', 'text/plain');
+    }
+})->name('robots');
 
 // Public Legal Pages Routes
 Route::get('/terms', function () { return view('terms'); })->name('terms');
@@ -228,6 +244,21 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     // Admin Quote Management
     Route::resource('quotes', AdminQuoteController::class)->only(['index', 'show', 'destroy']);
     Route::put('quotes/{quote}/status', [AdminQuoteController::class, 'updateStatus'])->name('quotes.updateStatus');
+
+    // SEO Management
+    Route::resource('seo', AdminSeoController::class)->only(['index', 'edit', 'update']);
+
+    // Edit static 'page' SEO by slug (no model)
+    Route::get('seo/page/{slug}/edit', [AdminSeoController::class, 'editPage'])->name('seo.editPage');
+    Route::post('seo/page/{slug}/update', [AdminSeoController::class, 'updatePage'])->name('seo.updatePage');
+
+    // AI generation endpoints for SEO
+    Route::post('seo/{seo}/generate-ai', [AdminSeoController::class, 'generateAI'])->name('seo.generateAI');
+    Route::post('seo/{seo}/fetch-page', [AdminSeoController::class, 'fetchPageContent'])->name('seo.fetchPage');
+    Route::post('seo/{seo}/preview-prompt', [AdminSeoController::class, 'previewPrompt'])->name('seo.previewPrompt');
+    Route::post('seo/page/{slug}/generate-ai', [AdminSeoController::class, 'generateAIPage'])->name('seo.generateAIPage');
+    Route::post('seo/page/{slug}/fetch-page', [AdminSeoController::class, 'fetchPagePageContent'])->name('seo.fetchPagePage');
+    Route::post('seo/page/{slug}/preview-prompt', [AdminSeoController::class, 'previewPromptPage'])->name('seo.previewPromptPage');
     Route::post('quotes/{quote}/respond', [AdminQuoteController::class, 'respond'])->name('quotes.respond');
     Route::post('quotes/{quote}/notes', [AdminQuoteController::class, 'addNotes'])->name('quotes.addNotes');
 

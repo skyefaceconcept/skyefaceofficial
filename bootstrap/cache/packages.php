@@ -1,4 +1,19 @@
 <?php return array (
+  'artesaos/seotools' => 
+  array (
+    'aliases' => 
+    array (
+      'SEO' => 'Artesaos\\SEOTools\\Facades\\SEOTools',
+      'JsonLd' => 'Artesaos\\SEOTools\\Facades\\JsonLd',
+      'SEOMeta' => 'Artesaos\\SEOTools\\Facades\\SEOMeta',
+      'Twitter' => 'Artesaos\\SEOTools\\Facades\\TwitterCard',
+      'OpenGraph' => 'Artesaos\\SEOTools\\Facades\\OpenGraph',
+    ),
+    'providers' => 
+    array (
+      0 => 'Artesaos\\SEOTools\\Providers\\SEOToolsServiceProvider',
+    ),
+  ),
   'laravel/fortify' => 
   array (
     'providers' => 
@@ -71,6 +86,13 @@
     'providers' => 
     array (
       0 => 'Termwind\\Laravel\\TermwindServiceProvider',
+    ),
+  ),
+  'spatie/laravel-sitemap' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Spatie\\Sitemap\\SitemapServiceProvider',
     ),
   ),
 );

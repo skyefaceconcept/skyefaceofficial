@@ -220,8 +220,12 @@
               <i class="menu-icon mdi mdi-database"></i>
               <span>Migrations</span>
             </a>
-          </li>
-          <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+          </li>            <li class="nav-item">
+              <a class="nav-link" href="<?php echo e(route('admin.seo.index')); ?>">
+                <i class="menu-icon mdi mdi-web"></i>
+                <span>SEO</span>
+              </a>
+            </li>          <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </ul>
       </div>
     </li>
