@@ -7,16 +7,16 @@
     <li class="nav-item nav-profile">
       <a href="<?php echo e(route('admin.profile.show')); ?>" class="nav-link">
         <div class="profile-image">
-          <img class="img-xs rounded-circle" src="<?php echo e(auth()->user()->profile_photo_url ?? asset('StarAdmin-Free-Bootstrap-Admin-Template-master/src/assets/images/faces/face8.jpg')); ?>" alt="profile image">
+          <img class="img-xs rounded-circle" src="<?php echo e(auth()->user()->profile_photo_url ?? asset('StarAdmin-Free-Bootstrap-Admin-Template-master/src/assets/images/faces/face8.jpg')); ?>" alt="profile image" style="width: 40px; height: 40px;">
           <div class="dot-indicator bg-success"></div>
         </div>
         <div class="text-wrapper">
-          <p class="profile-name"><?php echo e(auth()->user()->fname ?? 'User'); ?> <?php echo e(auth()->user()->lname ?? 'User'); ?></p>
-          <p class="designation"><?php echo e(auth()->user()->role->name ?? 'User'); ?></p>
+          <p class="profile-name" style="font-size: 13px; margin-bottom: 2px;"><?php echo e(auth()->user()->fname ?? 'User'); ?> <?php echo e(auth()->user()->lname ?? 'User'); ?></p>
+          <p class="designation" style="font-size: 11px;"><?php echo e(auth()->user()->role->name ?? 'User'); ?></p>
         </div>
       </a>
     </li>
-    <li class="nav-item nav-category">Main Menu</li>
+    <li class="nav-item nav-category" style="font-size: 12px;">Main Menu</li>
 
     <li class="nav-item">
       <a class="nav-link" href="<?php echo e(route('admin.dashboard')); ?>">
@@ -34,7 +34,7 @@
           $openTickets = \App\Models\ContactTicket::where('status', 'open')->count();
         ?>
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($openTickets > 0): ?>
-          <span class="badge badge-danger badge-pill ml-2"><?php echo e($openTickets); ?></span>
+          <span class="badge badge-danger badge-pill ms-2" style="font-size: 10px;"><?php echo e($openTickets); ?></span>
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
       </a>
     </li>
@@ -54,7 +54,7 @@
           $pendingOrders = \App\Models\Order::where('status', 'pending')->count();
         ?>
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($pendingOrders > 0): ?>
-          <span class="badge badge-success badge-pill ml-2"><?php echo e($pendingOrders); ?></span>
+          <span class="badge badge-success badge-pill ms-2" style="font-size: 10px;"><?php echo e($pendingOrders); ?></span>
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
       </a>
     </li>

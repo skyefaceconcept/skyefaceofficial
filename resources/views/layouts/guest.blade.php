@@ -33,9 +33,11 @@
         <!-- Styles -->
         @livewireStyles
     </head>
-    <body>
-        <div class="font-sans text-gray-900 antialiased">
-            @yield('content')
+    <body class="bg-white md:bg-gray-50">
+        <div class="font-sans text-gray-900 antialiased min-h-screen flex flex-col">
+            <main class="flex-1 px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+                @yield('content')
+            </main>
         </div>
 
         @livewireScripts

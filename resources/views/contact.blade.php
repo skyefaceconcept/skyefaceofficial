@@ -25,13 +25,13 @@
 		}
 
 		.contact-section {
-			padding: 80px 0;
+			padding: 40px 15px sm:padding: 60px 20px md:padding: 80px 0;
 			background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 			min-height: 100vh;
 		}
 
 		.contact-heading {
-			font-size: 48px;
+			font-size: clamp(28px, 6vw, 48px);
 			font-weight: 700;
 			color: #2c3e50;
 			margin-bottom: 15px;
@@ -39,15 +39,15 @@
 		}
 
 		.contact-subtitle {
-			font-size: 18px;
+			font-size: clamp(14px, 4vw, 18px);
 			color: #7f8c8d;
 			text-align: center;
-			margin-bottom: 50px;
+			margin-bottom: 30px sm:margin-bottom: 50px;
 		}
 
 		.contact-form {
 			background: white;
-			padding: 50px;
+			padding: 25px 15px sm:padding: 40px 25px md:padding: 50px;
 			border-radius: 12px;
 			box-shadow: 0 10px 40px rgba(0,0,0,0.1);
 			transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -59,35 +59,36 @@
 		}
 
 		.contact-form h4 {
-			font-size: 28px;
+			font-size: clamp(22px, 5vw, 28px);
 			font-weight: 700;
 			color: #2c3e50;
-			margin-bottom: 30px;
+			margin-bottom: 20px sm:margin-bottom: 30px;
 			border-bottom: 3px solid #007bff;
 			padding-bottom: 15px;
 		}
 
 		.form-group {
-			margin-bottom: 25px;
+			margin-bottom: 20px sm:margin-bottom: 25px;
 		}
 
 		.form-group label {
 			font-weight: 600;
 			color: #2c3e50;
-			margin-bottom: 10px;
+			margin-bottom: 8px sm:margin-bottom: 10px;
 			display: block;
-			font-size: 14px;
+			font-size: 12px sm:font-size: 14px;
 			text-transform: uppercase;
 			letter-spacing: 0.5px;
 		}
 
 		.form-control {
 			border: 2px solid #ecf0f1;
-			padding: 12px 18px;
+			padding: 10px 12px sm:padding: 12px 18px;
 			border-radius: 6px;
 			font-size: 14px;
 			transition: all 0.3s ease;
 			background-color: #f8f9fa;
+			width: 100%;
 		}
 
 		.form-control:focus {
@@ -103,19 +104,19 @@
 
 		textarea.form-control {
 			resize: vertical;
-			min-height: 150px;
+			min-height: 120px sm:min-height: 150px;
 			font-family: 'Roboto Condensed', sans-serif;
 		}
 
 		.submit-btn {
 			background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
 			color: white;
-			padding: 14px 40px;
+			padding: 12px 20px sm:padding: 14px 40px;
 			border: none;
 			border-radius: 6px;
 			cursor: pointer;
 			font-weight: 700;
-			font-size: 16px;
+			font-size: 14px sm:font-size: 16px;
 			transition: all 0.3s ease;
 			text-transform: uppercase;
 			letter-spacing: 1px;
@@ -138,16 +139,16 @@
 		}
 
 		.contact-info h4 {
-			font-size: 28px;
+			font-size: clamp(22px, 5vw, 28px);
 			font-weight: 700;
 			color: #2c3e50;
-			margin-bottom: 35px;
+			margin-bottom: 25px sm:margin-bottom: 35px;
 			border-bottom: 3px solid #007bff;
 			padding-bottom: 15px;
 		}
 
 		.contact-info-item {
-			margin-bottom: 35px;
+			margin-bottom: 25px sm:margin-bottom: 35px;
 			display: flex;
 			align-items: flex-start;
 		}

@@ -113,7 +113,7 @@ Route::post('/quotes/track', [QuoteController::class, 'track'])->name('quotes.tr
 Route::get('/repairs/track', function () { return view('repairs.track'); })->name('repairs.track.page');
 Route::post('/repairs', [RepairController::class, 'store'])->name('repairs.store');
 Route::post('/repairs/status', [RepairController::class, 'searchStatus'])->name('repairs.status');
-Route::get('/repairs/track/{invoiceNumber}', [RepairController::class, 'getStatus'])->name('repairs.status');
+Route::get('/repairs/track/{invoiceNumber}', [RepairController::class, 'getStatus'])->name('repairs.track.show');
 Route::get('/api/repairs/pricing', [RepairController::class, 'getPricing'])->name('api.repairs.pricing');
 Route::get('/api/payment/processor', [RepairController::class, 'getActivePaymentProcessor'])->name('api.payment.processor');
 Route::get('/repairs/{repair}/payment', [RepairController::class, 'showRepairPaymentForm'])->name('repairs.payment-form');

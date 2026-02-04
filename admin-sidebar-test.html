@@ -1,0 +1,254 @@
+<!-- Test page to verify sidebar functionality -->
+<html>
+<head>
+    <title>Admin Sidebar Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 4px; }
+        .test-item { margin: 10px 0; }
+        .test-item label { display: block; font-weight: bold; margin-bottom: 5px; }
+        .test-item input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .warning { color: orange; font-weight: bold; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>Admin Panel Sidebar Testing</h1>
+    
+    <div class="test-section">
+        <h2>1. Element Existence Tests</h2>
+        <div class="test-item">
+            <label>Sidebar Element:</label>
+            <input type="text" id="test-sidebar" readonly>
+        </div>
+        <div class="test-item">
+            <label>Desktop Toggle Button:</label>
+            <input type="text" id="test-toggle" readonly>
+        </div>
+        <div class="test-item">
+            <label>Mobile Toggle Button:</label>
+            <input type="text" id="test-mobile-toggle" readonly>
+        </div>
+        <div class="test-item">
+            <label>Page Body Wrapper:</label>
+            <input type="text" id="test-wrapper" readonly>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. CSS Classes Tests</h2>
+        <div class="test-item">
+            <label>Sidebar has correct classes:</label>
+            <input type="text" id="test-sidebar-classes" readonly>
+        </div>
+        <div class="test-item">
+            <label>CSS Styles Applied:</label>
+            <input type="text" id="test-styles" readonly>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. JavaScript Tests</h2>
+        <div class="test-item">
+            <label>admin-responsive.js loaded:</label>
+            <input type="text" id="test-js-loaded" readonly>
+        </div>
+        <div class="test-item">
+            <label>Event listeners attached:</label>
+            <input type="text" id="test-listeners" readonly>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Bootstrap Tests</h2>
+        <div class="test-item">
+            <label>Bootstrap loaded:</label>
+            <input type="text" id="test-bootstrap" readonly>
+        </div>
+        <div class="test-item">
+            <label>Bootstrap Collapse plugin available:</label>
+            <input type="text" id="test-collapse" readonly>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Responsive Tests</h2>
+        <div class="test-item">
+            <label>Current Window Width: <span id="window-width">0</span>px</label>
+        </div>
+        <div class="test-item">
+            <label>Current Breakpoint:</label>
+            <input type="text" id="test-breakpoint" readonly>
+        </div>
+        <div class="test-item">
+            <label>Mobile Mode Detected:</label>
+            <input type="text" id="test-mobile-mode" readonly>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Manual Toggle Tests</h2>
+        <button onclick="toggleSidebar()" style="padding: 10px 20px; margin: 5px; cursor: pointer;">Toggle Sidebar</button>
+        <button onclick="toggleCollapsed()" style="padding: 10px 20px; margin: 5px; cursor: pointer;">Toggle Collapsed</button>
+        <button onclick="openSidebar()" style="padding: 10px 20px; margin: 5px; cursor: pointer;">Open Sidebar</button>
+        <button onclick="closeSidebar()" style="padding: 10px 20px; margin: 5px; cursor: pointer;">Close Sidebar</button>
+        <button onclick="testCollapse()" style="padding: 10px 20px; margin: 5px; cursor: pointer;">Test Collapse</button>
+        <button onclick="clearLocalStorage()" style="padding: 10px 20px; margin: 5px; cursor: pointer;">Clear Storage</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Console Output</h2>
+        <div id="console-output" style="background: #000; color: #0f0; padding: 15px; border-radius: 4px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto;">
+            <div>Ready for testing...</div>
+        </div>
+    </div>
+
+    <script>
+        const consoleOutput = document.getElementById('console-output');
+        const originalLog = console.log;
+        
+        // Capture console logs
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const line = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' ');
+            const div = document.createElement('div');
+            div.textContent = '> ' + line;
+            consoleOutput.appendChild(div);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        };
+
+        function setTestValue(id, value, isError = false) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.value = value;
+                el.style.color = isError ? 'red' : 'green';
+            }
+        }
+
+        function runTests() {
+            console.log('=== SIDEBAR TESTS STARTED ===');
+            
+            // Test 1: Elements
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            const mobileToggle = document.getElementById('mobileSidebarToggle');
+            const wrapper = document.querySelector('.page-body-wrapper');
+            
+            setTestValue('test-sidebar', sidebar ? '✓ Found' : '✗ Not found', !sidebar);
+            setTestValue('test-toggle', toggle ? '✓ Found' : '✗ Not found', !toggle);
+            setTestValue('test-mobile-toggle', mobileToggle ? '✓ Found' : '✗ Not found', !mobileToggle);
+            setTestValue('test-wrapper', wrapper ? '✓ Found' : '✗ Not found', !wrapper);
+            
+            // Test 2: Classes
+            if (sidebar) {
+                const classes = sidebar.className;
+                setTestValue('test-sidebar-classes', classes || 'No classes');
+            }
+            
+            // Test 3: Computed styles
+            if (sidebar) {
+                const styles = window.getComputedStyle(sidebar);
+                const position = styles.position;
+                const width = styles.width;
+                setTestValue('test-styles', `position: ${position}, width: ${width}`);
+            }
+            
+            // Test 4: JavaScript
+            const jsLoaded = typeof window !== 'undefined';
+            setTestValue('test-js-loaded', jsLoaded ? '✓ Loaded' : '✗ Not loaded', !jsLoaded);
+            
+            // Test 5: Bootstrap
+            const bootstrapLoaded = typeof bootstrap !== 'undefined';
+            setTestValue('test-bootstrap', bootstrapLoaded ? '✓ Loaded' : '✗ Not loaded', !bootstrapLoaded);
+            
+            const collapseAvailable = bootstrapLoaded && typeof bootstrap.Collapse !== 'undefined';
+            setTestValue('test-collapse', collapseAvailable ? '✓ Available' : '✗ Not available', !collapseAvailable);
+            
+            // Test 6: Responsive
+            updateWindowWidth();
+            updateBreakpoint();
+            updateMobileMode();
+            
+            console.log('=== TESTS COMPLETED ===');
+        }
+
+        function updateWindowWidth() {
+            const width = window.innerWidth;
+            document.getElementById('window-width').textContent = width;
+        }
+
+        function updateBreakpoint() {
+            const width = window.innerWidth;
+            let breakpoint = 'Unknown';
+            if (width < 480) breakpoint = 'Extra Small (<480px)';
+            else if (width < 768) breakpoint = 'Small (480-768px)';
+            else if (width < 1024) breakpoint = 'Medium (768-1024px)';
+            else breakpoint = 'Large (>1024px)';
+            
+            document.getElementById('test-breakpoint').value = breakpoint;
+        }
+
+        function updateMobileMode() {
+            const isMobile = window.innerWidth <= 768;
+            document.getElementById('test-mobile-mode').value = isMobile ? 'Yes (≤768px)' : 'No (>768px)';
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('show');
+                console.log('Sidebar toggled. Classes:', sidebar.className);
+            }
+        }
+
+        function toggleCollapsed() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('sidebar-collapsed');
+                console.log('Collapsed toggled. Classes:', sidebar.className);
+            }
+        }
+
+        function openSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.add('show');
+                console.log('Sidebar opened');
+            }
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.remove('show');
+                console.log('Sidebar closed');
+            }
+        }
+
+        function testCollapse() {
+            const collapseEl = document.querySelector('.collapse');
+            if (collapseEl && typeof bootstrap !== 'undefined') {
+                const collapse = new bootstrap.Collapse(collapseEl, { toggle: true });
+                console.log('Collapse toggled:', collapseEl.id);
+            } else {
+                console.log('Collapse element or Bootstrap not found');
+            }
+        }
+
+        function clearLocalStorage() {
+            localStorage.clear();
+            console.log('LocalStorage cleared');
+        }
+
+        // Run tests on load and on resize
+        window.addEventListener('load', runTests);
+        window.addEventListener('resize', () => {
+            updateWindowWidth();
+            updateBreakpoint();
+            updateMobileMode();
+        });
+    </script>
+</body>
+</html>

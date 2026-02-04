@@ -16,12 +16,12 @@
 
     <!-- Global Stylesheets -->
     <link href="https://fonts.googleapis.com/css?family=Roboto+Condensed" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('Buzbox/admin/css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('Buzbox/admin/font-awesome-4.7.0/css/font-awesome.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('Buzbox/admin/css/font-icon-style.css') }}">
-    <link rel="stylesheet" href="{{ asset('Buzbox/admin/css/style.default.css') }}" id="theme-stylesheet">
-    <link rel="stylesheet" href="{{ asset('Buzbox/admin/css/ui-elements/card.css') }}">
-    <link rel="stylesheet" href="{{ asset('Buzbox/admin/css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('buzbox/admin/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('buzbox/admin/font-awesome-4.7.0/css/font-awesome.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('buzbox/admin/css/font-icon-style.css') }}">
+    <link rel="stylesheet" href="{{ asset('buzbox/admin/css/style.default.css') }}" id="theme-stylesheet">
+    <link rel="stylesheet" href="{{ asset('buzbox/admin/css/ui-elements/card.css') }}">
+    <link rel="stylesheet" href="{{ asset('buzbox/admin/css/style.css') }}">
 
     @yield('additional_css')
 </head>
@@ -244,10 +244,10 @@
     </form>
 
     <!-- Scripts -->
-    <script src="{{ asset('Buzbox/admin/js/jquery.min.js') }}"></script>
-    <script src="{{ asset('Buzbox/admin/js/popper.min.js') }}"></script>
-    <script src="{{ asset('Buzbox/admin/js/bootstrap.min.js') }}"></script>
-    <script src="{{ asset('Buzbox/admin/js/front.js') }}"></script>
+    <script src="{{ asset('buzbox/admin/js/jquery.min.js') }}"></script>
+    <script src="{{ asset('buzbox/admin/js/popper.min.js') }}"></script>
+    <script src="{{ asset('buzbox/admin/js/bootstrap.min.js') }}"></script>
+    <script src="{{ asset('buzbox/admin/js/front.js') }}"></script>
 
     <script>
         document.getElementById('toggle-btn')?.addEventListener('click', function(e) {

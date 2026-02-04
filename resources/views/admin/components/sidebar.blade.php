@@ -7,16 +7,16 @@
     <li class="nav-item nav-profile">
       <a href="{{ route('admin.profile.show') }}" class="nav-link">
         <div class="profile-image">
-          <img class="img-xs rounded-circle" src="{{ auth()->user()->profile_photo_url ?? asset('StarAdmin-Free-Bootstrap-Admin-Template-master/src/assets/images/faces/face8.jpg') }}" alt="profile image">
+          <img class="img-xs rounded-circle" src="{{ auth()->user()->profile_photo_url ?? asset('StarAdmin-Free-Bootstrap-Admin-Template-master/src/assets/images/faces/face8.jpg') }}" alt="profile image" style="width: 40px; height: 40px;">
           <div class="dot-indicator bg-success"></div>
         </div>
         <div class="text-wrapper">
-          <p class="profile-name">{{ auth()->user()->fname ?? 'User' }} {{ auth()->user()->lname ?? 'User' }}</p>
-          <p class="designation">{{ auth()->user()->role->name ?? 'User' }}</p>
+          <p class="profile-name" style="font-size: 13px; margin-bottom: 2px;">{{ auth()->user()->fname ?? 'User' }} {{ auth()->user()->lname ?? 'User' }}</p>
+          <p class="designation" style="font-size: 11px;">{{ auth()->user()->role->name ?? 'User' }}</p>
         </div>
       </a>
     </li>
-    <li class="nav-item nav-category">Main Menu</li>
+    <li class="nav-item nav-category" style="font-size: 12px;">Main Menu</li>
 
     <li class="nav-item">
       <a class="nav-link" href="{{ route('admin.dashboard') }}">
@@ -34,7 +34,7 @@
           $openTickets = \App\Models\ContactTicket::where('status', 'open')->count();
         @endphp
         @if($openTickets > 0)
-          <span class="badge badge-danger badge-pill ml-2">{{ $openTickets }}</span>
+          <span class="badge badge-danger badge-pill ms-2" style="font-size: 10px;">{{ $openTickets }}</span>
         @endif
       </a>
     </li>
@@ -54,7 +54,7 @@
           $pendingOrders = \App\Models\Order::where('status', 'pending')->count();
         @endphp
         @if($pendingOrders > 0)
-          <span class="badge badge-success badge-pill ml-2">{{ $pendingOrders }}</span>
+          <span class="badge badge-success badge-pill ms-2" style="font-size: 10px;">{{ $pendingOrders }}</span>
         @endif
       </a>
     </li>

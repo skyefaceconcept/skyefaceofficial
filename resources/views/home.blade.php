@@ -104,27 +104,27 @@
 		</section>
 
 		<!-- REPAIR INVOICE SEARCH SECTION -->
-		<section class="bg-light py-5" style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, rgba(40, 167, 69, 0.02) 100%);">
-			<div class="container">
-				<div class="row">
-					<div class="col-md-12">
-						<div class="text-center mb-4">
-							<h3 style="color: #222; font-weight: 700; margin-bottom: 10px;">Track Your Device Repair</h3>
-							<p style="color: #666; font-size: 14px;">Enter your repair invoice number to check the status of your device repair</p>
-						</div>
-						<div class="row justify-content-center">
-							<div class="col-md-6">
-								<form method="POST" action="{{ route('repairs.status') }}" style="display: flex; gap: 10px;">
-									@csrf
-									<input type="text" name="invoice_number" class="form-control" placeholder="Enter invoice number (e.g., INV-2026-001)" required style="border-radius: 6px; border: 1px solid #ddd; padding: 12px 15px;">
-									<button type="submit" class="btn" style="background: linear-gradient(135deg, #28a745 0%, #1fa935 100%); color: white; border: none; border-radius: 6px; padding: 12px 25px; font-weight: 600; white-space: nowrap;">
-										<i class="fa fa-search mr-2"></i>Search
-									</button>
-								</form>
-							</div>
-						</div>
-					</div>
+		<section class="py-6 sm:py-8 md:py-10 px-3 sm:px-4 md:px-6" style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, rgba(40, 167, 69, 0.02) 100%);">
+			<div class="max-w-2xl mx-auto">
+				<div class="text-center mb-6 sm:mb-8">
+					<h3 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">Track Your Device Repair</h3>
+					<p class="text-sm sm:text-base text-gray-600">Enter your repair invoice number to check the status of your device repair</p>
 				</div>
+				<form method="POST" action="{{ route('repairs.status') }}" class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+					@csrf
+					<input 
+						type="text" 
+						name="invoice_number" 
+						class="flex-1 form-control px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500" 
+						placeholder="Enter invoice number (e.g., INV-2026-001)" 
+						required>
+					<button 
+						type="submit" 
+						class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-lg active:scale-95" 
+						style="background: linear-gradient(135deg, #28a745 0%, #1fa935 100%);">
+						<i class="fa fa-search mr-1 sm:mr-2"></i><span class="hidden sm:inline">Search</span><span class="sm:hidden">Go</span>
+					</button>
+				</form>
 			</div>
 		</section>
 
