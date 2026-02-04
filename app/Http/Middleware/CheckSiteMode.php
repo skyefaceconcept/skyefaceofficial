@@ -35,6 +35,31 @@ class CheckSiteMode
             return $next($request);
         }
 
+        // Allow static assets (css/js/images/fonts, files with extensions) to be served during maintenance
+        $path = $request->path();
+        if (strpos($path, '.') !== false) {
+            return $next($request);
+        }
+
+        // Also allow direct access to public folder paths used by some setups
+        if (
+            $request->is('public/*') ||
+            $request->is('assets/*') ||
+            $request->is('storage/*') ||
+            $request->is('css/*') ||
+            $request->is('js/*') ||
+            $request->is('images/*') ||
+            $request->is('img/*') ||
+            $request->is('favicon.ico') ||
+            $request->is('robots.txt') ||
+            $request->is('mix-manifest.json') ||
+            $request->is('build/*') ||
+            $request->is('vendor/*') ||
+            $request->is('fonts/*')
+        ) {
+            return $next($request);
+        }
+
         // Allow authenticated super-admins to bypass (if user model has is_admin or role check)
         if (Auth::check()) {
             $user = Auth::user();

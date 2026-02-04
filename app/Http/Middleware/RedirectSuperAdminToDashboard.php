@@ -17,9 +17,19 @@ class RedirectSuperAdminToDashboard
     {
         if (auth()->check()) {
             $user = auth()->user();
-            
-            // If user is SuperAdmin and trying to access regular dashboard, redirect to admin
-            if ($user->role && $user->role->slug === 'superadmin' && $request->path() === 'dashboard') {
+
+            // Determine if user should be considered a SuperAdmin
+            $isSuper = false;
+            if (method_exists($user, 'isSuperAdmin')) {
+                $isSuper = $user->isSuperAdmin();
+            } elseif (method_exists($user, 'hasRole')) {
+                $isSuper = $user->hasRole('superadmin');
+            } elseif ($user->role && isset($user->role->slug)) {
+                $isSuper = strcasecmp($user->role->slug, 'superadmin') === 0;
+            }
+
+            // If user is SuperAdmin and trying to access the regular dashboard route, redirect to admin dashboard
+            if ($isSuper && ($request->routeIs('dashboard') || $request->is('dashboard') || trim($request->path(), '/') === 'dashboard')) {
                 return redirect()->route('admin.dashboard');
             }
         }

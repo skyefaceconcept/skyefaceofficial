@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Routing\Router;
 use App\Models\Role;
 use App\Http\Middleware\IsSuperAdmin;
-use App\HTTP\Middleware\RedirectSuperAdminToDashboard;
+use App\Http\Middleware\RedirectSuperAdminToDashboard;
 use App\Http\Middleware\CheckSiteMode;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Auth;
@@ -45,7 +45,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Register the SuperAdmin middleware
         $router->aliasMiddleware('is.superadmin', IsSuperAdmin::class);
-        $router->aliasMiddleware('redirect.superadmin', RedirectSuperAdminToDashboard::class);
+        $router->aliasMiddleware('redirect.superadmin', \App\Http\Middleware\RedirectSuperAdminToDashboard::class);
 
         // Register DB check middleware so requests gracefully redirect to installer when DB is not reachable
         try {
