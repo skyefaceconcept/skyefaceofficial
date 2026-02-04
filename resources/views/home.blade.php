@@ -112,15 +112,15 @@
 				</div>
 				<form method="POST" action="{{ route('repairs.status') }}" class="flex flex-col sm:flex-row gap-2 sm:gap-3">
 					@csrf
-					<input 
-						type="text" 
-						name="invoice_number" 
-						class="flex-1 form-control px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500" 
-						placeholder="Enter invoice number (e.g., INV-2026-001)" 
+					<input
+						type="text"
+						name="invoice_number"
+						class="flex-1 form-control px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+						placeholder="Enter invoice number (e.g., INV-2026-001)"
 						required>
-					<button 
-						type="submit" 
-						class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-lg active:scale-95" 
+					<button
+						type="submit"
+						class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-lg active:scale-95"
 						style="background: linear-gradient(135deg, #28a745 0%, #1fa935 100%);">
 						<i class="fa fa-search mr-1 sm:mr-2"></i><span class="hidden sm:inline">Search</span><span class="sm:hidden">Go</span>
 					</button>

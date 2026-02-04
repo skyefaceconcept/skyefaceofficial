@@ -16,7 +16,7 @@
 </head>
 <body>
     <h1>Admin Panel Sidebar Testing</h1>
-    
+
     <div class="test-section">
         <h2>1. Element Existence Tests</h2>
         <div class="test-item">
@@ -108,7 +108,7 @@
     <script>
         const consoleOutput = document.getElementById('console-output');
         const originalLog = console.log;
-        
+
         // Capture console logs
         console.log = function(...args) {
             originalLog.apply(console, args);
@@ -129,24 +129,24 @@
 
         function runTests() {
             console.log('=== SIDEBAR TESTS STARTED ===');
-            
+
             // Test 1: Elements
             const sidebar = document.getElementById('sidebar');
             const toggle = document.getElementById('sidebarToggle');
             const mobileToggle = document.getElementById('mobileSidebarToggle');
             const wrapper = document.querySelector('.page-body-wrapper');
-            
+
             setTestValue('test-sidebar', sidebar ? '✓ Found' : '✗ Not found', !sidebar);
             setTestValue('test-toggle', toggle ? '✓ Found' : '✗ Not found', !toggle);
             setTestValue('test-mobile-toggle', mobileToggle ? '✓ Found' : '✗ Not found', !mobileToggle);
             setTestValue('test-wrapper', wrapper ? '✓ Found' : '✗ Not found', !wrapper);
-            
+
             // Test 2: Classes
             if (sidebar) {
                 const classes = sidebar.className;
                 setTestValue('test-sidebar-classes', classes || 'No classes');
             }
-            
+
             // Test 3: Computed styles
             if (sidebar) {
                 const styles = window.getComputedStyle(sidebar);
@@ -154,23 +154,23 @@
                 const width = styles.width;
                 setTestValue('test-styles', `position: ${position}, width: ${width}`);
             }
-            
+
             // Test 4: JavaScript
             const jsLoaded = typeof window !== 'undefined';
             setTestValue('test-js-loaded', jsLoaded ? '✓ Loaded' : '✗ Not loaded', !jsLoaded);
-            
+
             // Test 5: Bootstrap
             const bootstrapLoaded = typeof bootstrap !== 'undefined';
             setTestValue('test-bootstrap', bootstrapLoaded ? '✓ Loaded' : '✗ Not loaded', !bootstrapLoaded);
-            
+
             const collapseAvailable = bootstrapLoaded && typeof bootstrap.Collapse !== 'undefined';
             setTestValue('test-collapse', collapseAvailable ? '✓ Available' : '✗ Not available', !collapseAvailable);
-            
+
             // Test 6: Responsive
             updateWindowWidth();
             updateBreakpoint();
             updateMobileMode();
-            
+
             console.log('=== TESTS COMPLETED ===');
         }
 
@@ -186,7 +186,7 @@
             else if (width < 768) breakpoint = 'Small (480-768px)';
             else if (width < 1024) breakpoint = 'Medium (768-1024px)';
             else breakpoint = 'Large (>1024px)';
-            
+
             document.getElementById('test-breakpoint').value = breakpoint;
         }
 
