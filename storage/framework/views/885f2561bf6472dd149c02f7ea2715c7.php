@@ -126,6 +126,13 @@
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
       </a>
     </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="<?php echo e(route('admin.seo.index')); ?>">
+        <i class="menu-icon mdi mdi-web"></i>
+        <span class="menu-title">SEO Management</span>
+      </a>
+    </li>
     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('permission', ['view_users','view_roles','view_permissions'])): ?>

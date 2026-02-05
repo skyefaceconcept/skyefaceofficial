@@ -252,6 +252,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
     Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');
 
+    // SEO Management
+    Route::resource('seo', \App\Http\Controllers\Admin\SeoController::class)->except(['show']);
+    // Optional: per-page quick editor
+    Route::get('seo/page/{slug}/edit', [\App\Http\Controllers\Admin\SeoController::class, 'editPage'])->name('seo.editPage');
+    Route::post('seo/page/{slug}/update', [\App\Http\Controllers\Admin\SeoController::class, 'updatePage'])->name('seo.updatePage');
+
     // Admin License Management
     Route::get('licenses', [App\Http\Controllers\Admin\LicenseController::class, 'index'])->name('licenses.index');
     Route::get('licenses/{license}', [App\Http\Controllers\Admin\LicenseController::class, 'show'])->name('licenses.show');
@@ -317,6 +323,9 @@ Route::view('/about', 'about')->name('about');
 
 // Services page
 Route::view('/services', 'services')->name('services');
+
+// Sitemap (generated from SEO entries)
+Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
 // DEBUG: Test email route (remove in production)
 Route::get('/test-email', function () {
     try {

@@ -126,6 +126,13 @@
         @endif
       </a>
     </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="{{ route('admin.seo.index') }}">
+        <i class="menu-icon mdi mdi-web"></i>
+        <span class="menu-title">SEO Management</span>
+      </a>
+    </li>
     @endif
 
     @permission(['view_users','view_roles','view_permissions'])
