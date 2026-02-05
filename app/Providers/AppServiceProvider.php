@@ -67,6 +67,13 @@ class AppServiceProvider extends ServiceProvider
             // If the router doesn't support pushMiddlewareToGroup in this environment, ignore silently
         }
 
+        // Inject a resolved meta description into all views for use in layout meta tags
+        try {
+            $router->pushMiddlewareToGroup('web', \App\Http\Middleware\InjectSeoDescription::class);
+        } catch (\Throwable $e) {
+            // ignore when push not supported
+        }
+
         // Assign a default role on user registration (if a role with slug 'user' exists)
         Event::listen(Registered::class, function (Registered $event) {
             $user = $event->user;
