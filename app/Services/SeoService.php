@@ -8,50 +8,44 @@ use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\TwitterCard;
 use Artesaos\SEOTools\Facades\JsonLd;
 
+use Illuminate\Http\Request;
+
 class SeoService
 {
     /**
-     * Apply SEO data to the SEOTools facades.
-     * Accepts an array with possible keys like: title, meta_description, canonical, noindex, nofollow,
-     * og_title, og_description, og_image, twitter_title, twitter_description, twitter_image, json_ld
+     * Apply SEO data to the SEOTools facades. (legacy/compatibility)
      */
     public function apply(array $data = []): void
     {
-        $title = $data['title'] ?? config('app.name');
+        // Keep minimal compatibility: set meta description only when SEOTools present
         $description = $data['meta_description'] ?? config('app.description', '');
+        if (class_exists('\Artesaos\SEOTools\Facades\SEOMeta')) {
+            \Artesaos\SEOTools\Facades\SEOMeta::setDescription($description);
+        }
+    }
 
-        SEOToolsFacade::setTitle($title);
-        SEOMeta::setDescription($description);
+    /**
+     * Resolve a meta description for the current request.
+     * Priority: page slug -> site default -> config
+     */
+    public function getDescriptionForRequest(Request $request): string
+    {
+        $slug = trim($request->path(), '/');
+        $slug = $slug === '' ? 'home' : $slug;
 
-        if (! empty($data['canonical'])) {
-            SEOMeta::setCanonical($data['canonical']);
+        // Try page-specific SEO row
+        $pageSeo = \App\Models\SeoMeta::where('seoable_type','page')->where('page_slug', $slug)->first();
+        if ($pageSeo && $pageSeo->meta_description) {
+            return trim(mb_substr($pageSeo->meta_description, 0, 160));
         }
 
-        if (! empty($data['noindex']) || ! empty($data['nofollow'])) {
-            $robots = [];
-            if (! empty($data['noindex'])) $robots[] = 'noindex';
-            if (! empty($data['nofollow'])) $robots[] = 'nofollow';
-            SEOMeta::addMeta('robots', implode(',', $robots), 'name');
+        // Site-wide default
+        $siteSeo = \App\Models\SeoMeta::where('seoable_type','site')->first();
+        if ($siteSeo && $siteSeo->meta_description) {
+            return trim(mb_substr($siteSeo->meta_description, 0, 160));
         }
 
-        // Open Graph
-        if (! empty($data['og_title'])) OpenGraph::setTitle($data['og_title']);
-        if (! empty($data['og_description'])) OpenGraph::setDescription($data['og_description']);
-        if (! empty($data['og_image'])) OpenGraph::addImage($data['og_image']);
-
-        // Twitter
-        if (! empty($data['twitter_title'])) TwitterCard::addValue('title', $data['twitter_title']);
-        if (! empty($data['twitter_description'])) TwitterCard::addValue('description', $data['twitter_description']);
-        if (! empty($data['twitter_image'])) TwitterCard::addValue('image', $data['twitter_image']);
-
-        // Json-LD
-        if (! empty($data['json_ld'])) {
-            try {
-                $json = is_array($data['json_ld']) ? $data['json_ld'] : json_decode($data['json_ld'], true);
-                if ($json) JsonLd::addValue('@graph', $json);
-            } catch (\Throwable $e) {
-                // ignore invalid json
-            }
-        }
+        // Fallback to config
+        return config('app.description', '');
     }
 }

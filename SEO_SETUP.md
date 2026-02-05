@@ -1,13 +1,12 @@
 SEO setup summary
 
 What's included:
-- Installed: artesaos/seotools (meta + social + json-ld), spatie/laravel-sitemap (sitemap generator), spatie/robots-txt (robots generator)
+- **Simplified description manager** using `App\Models\SeoMeta` for per-page descriptions
 - Migration and model to store per-page SEO (`seo_meta` table + `App\Models\SeoMeta`)
 - `App\Traits\HasSeo` trait to attach SEO to any Eloquent model
-- `App\Services\SeoService` to apply SEO values to SEOTools facades
-- Admin UI: `admin/seo` (index, edit, update)
-- Artisan command: `php artisan sitemap:generate` (scheduled daily)
-- Dynamic `robots.txt` route at `/robots.txt`
+- `App\Services\SeoService` (lightweight) to resolve a single meta description for pages and site default
+- Admin UI: `admin/seo` (index, edit, update). The edit form is intentionally minimal: **title** and **meta_description** only
+- Artisan command: `php artisan sitemap:generate` (scheduled daily) (unchanged)
 
 How to attach SEO to a model
 1. Add `use App\Traits\HasSeo;` to your model and `use HasSeo;` in the class.
@@ -31,14 +30,7 @@ Sitemap & robots
 - `robots.txt` is available at `/robots.txt` and references the sitemap.
 
 AI-assisted generation
-- An experimental AI generator is available from the Admin UI on the SEO edit page.
-- To enable AI integration, set these environment variables in your `.env` (no key is committed):
-
-  - `AI_PROVIDER=openai`
-  - `AI_API_KEY=sk-...` (your OpenAI API key)
-  - `AI_MODEL=gpt-3.5-turbo` (optional; defaults to `gpt-3.5-turbo`)
-
-- The admin 'Edit SEO' page contains a **Generate with AI** button which will call the configured provider and return a JSON payload you can preview and apply to the form.
+- Removed: AI-assisted generation and remote page fetching have been disabled to avoid non-deterministic metadata changes. If you need AI assistance in future it will be re-introduced as an opt-in, clearly flagged feature.
 
 Next improvements (I can implement):
 - Bulk SEO editor / CSV import-export

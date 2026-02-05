@@ -81,20 +81,8 @@ Route::post('/debug/checkout-test', function (\Illuminate\Http\Request $request)
 Route::get('/contact', function () { return view('contact'); })->name('contact.show');
 Route::post('/contact/send', [ContactController::class, 'store'])->name('contact.store');
 
-// Serve robots.txt dynamically (includes sitemap link)
-Route::get('/robots.txt', function () {
-    try {
-        $robots = \Spatie\RobotsTxt\Robots::create();
-        $robots->addUserAgent('*');
-        $robots->addAllow('/');
-        $robots->addSitemap(url('/sitemap.xml'));
-        return response($robots->toString(), 200)->header('Content-Type', 'text/plain');
-    } catch (\Throwable $e) {
-        // Fallback: return a basic robots file
-        $content = "User-agent: *\nAllow: /\nSitemap: " . url('/sitemap.xml');
-        return response($content, 200)->header('Content-Type', 'text/plain');
-    }
-})->name('robots');
+// robots.txt: served from public/robots.txt for simplicity.
+// Dynamic robots route removed as part of simplified SEO feature set. Please place a static `robots.txt` in the `public/` directory if needed.
 
 // Public Legal Pages Routes
 Route::get('/terms', function () { return view('terms'); })->name('terms');
@@ -252,13 +240,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('seo/page/{slug}/edit', [AdminSeoController::class, 'editPage'])->name('seo.editPage');
     Route::post('seo/page/{slug}/update', [AdminSeoController::class, 'updatePage'])->name('seo.updatePage');
 
-    // AI generation endpoints for SEO
-    Route::post('seo/{seo}/generate-ai', [AdminSeoController::class, 'generateAI'])->name('seo.generateAI');
-    Route::post('seo/{seo}/fetch-page', [AdminSeoController::class, 'fetchPageContent'])->name('seo.fetchPage');
-    Route::post('seo/{seo}/preview-prompt', [AdminSeoController::class, 'previewPrompt'])->name('seo.previewPrompt');
-    Route::post('seo/page/{slug}/generate-ai', [AdminSeoController::class, 'generateAIPage'])->name('seo.generateAIPage');
-    Route::post('seo/page/{slug}/fetch-page', [AdminSeoController::class, 'fetchPagePageContent'])->name('seo.fetchPagePage');
-    Route::post('seo/page/{slug}/preview-prompt', [AdminSeoController::class, 'previewPromptPage'])->name('seo.previewPromptPage');
+    // AI endpoints removed: automated AI generation & remote page fetching disabled for a simpler, deterministic SEO description manager.
     Route::post('quotes/{quote}/respond', [AdminQuoteController::class, 'respond'])->name('quotes.respond');
     Route::post('quotes/{quote}/notes', [AdminQuoteController::class, 'addNotes'])->name('quotes.addNotes');
 

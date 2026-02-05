@@ -5,27 +5,27 @@
 
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-		<meta name="description" content="{{ e($pageDescription ?? config('app.description','')) }}">
+		<meta name="description" content="<?php echo e(e($pageDescription ?? config('app.description',''))); ?>">
 		<meta name="author" content="">
 
-		<title>{{ config('app.name') }}</title>
-		<link rel="shortcut icon" href="{{ \App\Helpers\CompanyHelper::favicon() }}">
+		<title><?php echo e(config('app.name')); ?></title>
+		<link rel="shortcut icon" href="<?php echo e(\App\Helpers\CompanyHelper::favicon()); ?>">
 
 		<!-- Global Stylesheets -->
 		<link href="https://fonts.googleapis.com/css?family=Roboto+Condensed:300,300i,400,400i,700,700i" rel="stylesheet">
-		<link href="{{ asset('buzbox/css/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
-		<link rel="stylesheet" href="{{ asset('buzbox/font-awesome-4.7.0/css/font-awesome.min.css') }}">
-		<link rel="stylesheet" href="{{ asset('buzbox/css/animate/animate.min.css') }}">
-		<link rel="stylesheet" href="{{ asset('buzbox/css/owl-carousel/owl.carousel.min.css') }}">
-		<link rel="stylesheet" href="{{ asset('buzbox/css/owl-carousel/owl.theme.default.min.css') }}">
-		<link rel="stylesheet" href="{{ asset('buzbox/css/style.css') }}">
+		<link href="<?php echo e(asset('buzbox/css/bootstrap/bootstrap.min.css')); ?>" rel="stylesheet">
+		<link rel="stylesheet" href="<?php echo e(asset('buzbox/font-awesome-4.7.0/css/font-awesome.min.css')); ?>">
+		<link rel="stylesheet" href="<?php echo e(asset('buzbox/css/animate/animate.min.css')); ?>">
+		<link rel="stylesheet" href="<?php echo e(asset('buzbox/css/owl-carousel/owl.carousel.min.css')); ?>">
+		<link rel="stylesheet" href="<?php echo e(asset('buzbox/css/owl-carousel/owl.theme.default.min.css')); ?>">
+		<link rel="stylesheet" href="<?php echo e(asset('buzbox/css/style.css')); ?>">
 	</head>
 
 	<body id="page-top">
 
 		<header>
-		@include('partials.top-nav')
-		@include('partials.navbar')
+		<?php echo $__env->make('partials.top-nav', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+		<?php echo $__env->make('partials.navbar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 	</header>
 		<section id="login">
 			<div class="modal fade" id="login-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
@@ -110,8 +110,8 @@
 					<h3 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">Track Your Device Repair</h3>
 					<p class="text-sm sm:text-base text-gray-600">Enter your repair invoice number to check the status of your device repair</p>
 				</div>
-				<form method="POST" action="{{ route('repairs.status') }}" class="flex flex-col sm:flex-row gap-2 sm:gap-3">
-					@csrf
+				<form method="POST" action="<?php echo e(route('repairs.status')); ?>" class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+					<?php echo csrf_field(); ?>
 					<input
 						type="text"
 						name="invoice_number"
@@ -136,7 +136,7 @@
 						<div class="heading-border"></div>
 						<p class="wow fadeInUp" data-wow-delay="0.4s">Skyeface Digital Ltd is committed to helping businesses, organizations, and individuals leverage technology to achieve sustainable growth. We focus on delivering practical, secure, and scalable digital solutions that solve real problems and create long-term value.</p>
 <p class="wow fadeInUp" data-wow-delay="0.4s">We work closely with our clients to understand their goals, challenges, and vision, ensuring every solution we deliver is aligned with their business objectives.</p>
-						{{-- <div class="title-but"><button class="btn btn-general btn-green" role="button">Read More</button></div> --}}
+						
 					</div>
 				</div>
 			</div>
@@ -182,7 +182,7 @@
 									<div class="caption">
 										<i class="fa fa-chain"></i>
 									</div>
-									<img src="{{ asset('buzbox/img/news/news-11.png') }}" class="img-fluid" alt="...">
+									<img src="<?php echo e(asset('buzbox/img/news/news-11.png')); ?>" class="img-fluid" alt="...">
 							</div>
 							<h3>Digital Product Development</h3>
 							<p class="desc">We design and build secure, scalable websites and software solutions tailored to meet specific business needs. </p>
@@ -195,7 +195,7 @@
 									<div class="caption">
 										<i class="fa fa-chain"></i>
 									</div>
-									<img src="{{ asset('buzbox/img/news/news-13.jpg') }}" class="img-fluid" alt="...">
+									<img src="<?php echo e(asset('buzbox/img/news/news-13.jpg')); ?>" class="img-fluid" alt="...">
 							</div>
 							<h3>Strategic Digital Solutions</h3>
 							<p class="desc">We provide technology-driven strategies that improve efficiency, strengthen online presence, and support business growth. </p>
@@ -208,7 +208,7 @@
 									<div class="caption">
 										<i class="fa fa-chain"></i>
 									</div>
-									<img src="{{ asset('buzbox/img/news/news-14.jpg') }}" class="img-fluid" alt="...">
+									<img src="<?php echo e(asset('buzbox/img/news/news-14.jpg')); ?>" class="img-fluid" alt="...">
 							</div>
 							<h3>Reliable Support & Maintenance</h3>
 							<p class="desc">We offer ongoing technical support, system maintenance, and performance optimization to ensure long-term reliability. </p>
@@ -290,7 +290,7 @@
 					<div class="row" >
 						<div class="col-md-6" >
 							<div class="story-himg" >
-								<img src="{{ asset('buzbox/img/image-4.jpg') }}" class="img-fluid" alt="">
+								<img src="<?php echo e(asset('buzbox/img/image-4.jpg')); ?>" class="img-fluid" alt="">
 							</div>
 						</div>
 						<div class="col-md-6">
@@ -299,8 +299,8 @@
 								<div class="heading-border-light"></div>
 								<p>At Skyeface Digital Ltd, our success is built on helping businesses transform through technology. We partner with our clients to understand their vision, implement the right digital solutions, and support continuous growth through innovation, reliability, and strategic execution. </p>
 								<p>By working with us, organizations gain a trusted digital partner committed to delivering measurable results and long-term success in an evolving digital world.</p>
-								{{-- <p class="text-right" style="font-style: italic; font-weight: 700;"><a href="#">Businessbox</a></p> --}}
-								{{-- <div class="title-but"><button class="btn btn-general btn-green" role="button">Read More</button></div> --}}
+								
+								
 							</div>
 						</div>
 					</div>
@@ -309,26 +309,26 @@
 					<div class="row">
 						<div class="col-md-4 col-sm-6 wow fadeInUp" data-wow-delay="0.1s">
 							<div class="story-descb">
-									<img src="{{ asset('buzbox/img/news/news-10.jpg') }}" class="img-fluid" alt="...">
+									<img src="<?php echo e(asset('buzbox/img/news/news-10.jpg')); ?>" class="img-fluid" alt="...">
 									<h6>Virtual training systems</h6>
 									<p>We design and deploy virtual training platforms that enable organizations to deliver structured learning, skill development, and knowledge sharing through secure and interactive digital environments.</p>
-									{{-- <a href="#"><i class="fa fa-arrow-circle-o-right"></i> Read More</a> --}}
+									
 							</div>
 						</div>
 						<div class="col-md-4 col-sm-6 wow fadeInUp" data-wow-delay="0.3s">
 							<div class="story-descb">
-									<img src="{{ asset('buzbox/img/news/news-2.jpg') }}" class="img-fluid" alt="...">
+									<img src="<?php echo e(asset('buzbox/img/news/news-2.jpg')); ?>" class="img-fluid" alt="...">
 									<h6>Design planning</h6>
 									<p>We provide strategic design and planning services that align technology with business objectives, ensuring every digital solution is well-structured, scalable, and results-driven from inception.</p>
-									{{-- <a href=""><i class="fa fa-arrow-circle-o-right"></i> Read More</a> --}}
+									
 							</div>
 						</div>
 						<div class="col-md-4 col-sm-6 wow fadeInUp" data-wow-delay="0.5s">
 							<div class="story-descb">
-									<img src="{{ asset('buzbox/img/news/news-8.jpg') }}" class="img-fluid" alt="...">
+									<img src="<?php echo e(asset('buzbox/img/news/news-8.jpg')); ?>" class="img-fluid" alt="...">
 									<h6>Remote condition monitoring</h6>
 									<p>We develop digital monitoring solutions that allow businesses to track system performance, usage, and operational status remotely, enabling proactive maintenance and improved decision-making.</p>
-									{{-- <a href=""><i class="fa fa-arrow-circle-o-right"></i> Read More</a> --}}
+									
 							</div>
 						</div>
 					</div>
@@ -400,7 +400,7 @@
 				<div class="row">
 					<div class="col-md-6 col-sm-12">
 						<div class="client-cont wow fadeInUp" data-wow-delay="0.1s">
-							<img src="{{ asset('buzbox/img/client/avatar-6.jpg') }}" class="img-fluid" alt="">
+							<img src="<?php echo e(asset('buzbox/img/client/avatar-6.jpg')); ?>" class="img-fluid" alt="">
 							<h5>You Could Be Here</h5>
 							<h6>Our First Client</h6>
 							<i class="fa fa-quote-left"></i>
@@ -409,7 +409,7 @@
 					</div>
 					<div class="col-md-6 col-sm-12">
 						<div class="client-cont wow fadeInUp" data-wow-delay="0.3s">
-							<img src="{{ asset('buzbox/img/client/avatar-2.jpg') }}" class="img-fluid" alt="">
+							<img src="<?php echo e(asset('buzbox/img/client/avatar-2.jpg')); ?>" class="img-fluid" alt="">
 							<h6>Your Story Matters</h6>
 							<h6>Join Our Journey</h6>
 							<i class="fa fa-quote-left"></i>
@@ -428,7 +428,7 @@
 						<div class="contact-h-cont">
 							<h3 class="cl-white">Continue The Conversation</h3><br>
 							<form id="contactForm" onsubmit="submitContactForm(event)">
-								@csrf
+								<?php echo csrf_field(); ?>
 								<div class="form-group cl-white">
 									<label for="name">Your Name</label>
 									<input type="text" class="form-control" id="name" name="name" aria-describedby="nameHelp" placeholder="Enter name" required>
@@ -458,72 +458,23 @@
 			</div>
 		</section>
 
-		{{-- <section id="comp-offer">
-			<div class="container-fluid">
-				<div class="row">
-					<div class="col-md-3 col-sm-6  desc-comp-offer wow fadeInUp" data-wow-delay="0.2s">
-						<h2>Latest News</h2>
-						<div class="heading-border-light"></div>
-						<button class="btn btn-general btn-green" role="button">See More</button>
-					</div>
-					<div class="col-md-3 col-sm-6 desc-comp-offer wow fadeInUp" data-wow-delay="0.4s">
-						<div class="desc-comp-offer-cont">
-							<div class="thumbnail-blogs">
-									<div class="caption">
-										<i class="fa fa-chain"></i>
-									</div>
-									<img src="{{ asset('buzbox/img/news/news-1.jpg') }}" class="img-fluid" alt="...">
-							</div>
-							<h3>Pricing Strategies for Product</h3>
-							<p class="desc">Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from Business box. </p>
-							<a href="#"><i class="fa fa-arrow-circle-o-right"></i> Learn More</a>
-						</div>
-					</div>
-					<div class="col-md-3 col-sm-6 desc-comp-offer wow fadeInUp" data-wow-delay="0.6s">
-						<div class="desc-comp-offer-cont">
-							<div class="thumbnail-blogs">
-									<div class="caption">
-										<i class="fa fa-chain"></i>
-									</div>
-									<img src="{{ asset('buzbox/img/news/news-9.jpg') }}" class="img-fluid" alt="...">
-							</div>
-							<h3>Design Exhibitions of 2017</h3>
-							<p class="desc">Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from Business box. </p>
-							<a href="#"><i class="fa fa-arrow-circle-o-right"></i> Learn More</a>
-						</div>
-					</div>
-					<div class="col-md-3 col-sm-6 desc-comp-offer wow fadeInUp" data-wow-delay="0.8s">
-						<div class="desc-comp-offer-cont">
-							<div class="thumbnail-blogs">
-									<div class="caption">
-										<i class="fa fa-chain"></i>
-									</div>
-									<img src="{{ asset('buzbox/img/news/news-12.jpeg') }}" class="img-fluid" alt="...">
-							</div>
-							<h3>Exciting New Technologies</h3>
-							<p class="desc">Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from Business box. </p>
-							<a href="#"><i class="fa fa-arrow-circle-o-right"></i> Learn More</a>
-						</div>
-					</div>
-				</div>
-			</div>
-		</section> --}}
+		
 
 		<footer>
-			@include('partials.footer-top')
-			@include('partials.footer-bottom')
+			<?php echo $__env->make('partials.footer-top', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+			<?php echo $__env->make('partials.footer-bottom', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 		</footer>
 
 		<!--Global JavaScript -->
-		<script src="{{ asset('buzbox/js/jquery/jquery.min.js') }}"></script>
-		<script src="{{ asset('buzbox/js/popper/popper.min.js') }}"></script>
-		<script src="{{ asset('buzbox/js/bootstrap/bootstrap.min.js') }}"></script>
-		<script src="{{ asset('buzbox/js/wow/wow.min.js') }}"></script>
-		<script src="{{ asset('buzbox/js/owl-carousel/owl.carousel.min.js') }}"></script>
+		<script src="<?php echo e(asset('buzbox/js/jquery/jquery.min.js')); ?>"></script>
+		<script src="<?php echo e(asset('buzbox/js/popper/popper.min.js')); ?>"></script>
+		<script src="<?php echo e(asset('buzbox/js/bootstrap/bootstrap.min.js')); ?>"></script>
+		<script src="<?php echo e(asset('buzbox/js/wow/wow.min.js')); ?>"></script>
+		<script src="<?php echo e(asset('buzbox/js/owl-carousel/owl.carousel.min.js')); ?>"></script>
 
 		<!-- Plugin JavaScript -->
-		<script src="{{ asset('buzbox/js/jquery-easing/jquery.easing.min.js') }}"></script>
-		<script src="{{ asset('buzbox/js/custom.js') }}"></script>
+		<script src="<?php echo e(asset('buzbox/js/jquery-easing/jquery.easing.min.js')); ?>"></script>
+		<script src="<?php echo e(asset('buzbox/js/custom.js')); ?>"></script>
 
 		<script>
 		async function submitContactForm(event) {
@@ -545,7 +496,7 @@
 				submitButton.disabled = true;
 				submitButton.textContent = 'Sending...';
 
-				const response = await fetch('{{ route("contact.store") }}', {
+				const response = await fetch('<?php echo e(route("contact.store")); ?>', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -583,6 +534,7 @@
 		</script>
 
 	<!-- Include Repair Booking Modal -->
-	@include('partials.repair-booking-modal')
+	<?php echo $__env->make('partials.repair-booking-modal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 	<!-- Include Repair Search Modal -->
-	@include('partials.repair-search-modal')
+	<?php echo $__env->make('partials.repair-search-modal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+<?php /**PATH C:\laragon\www\Skyefaceofficial\resources\views/home.blade.php ENDPATH**/ ?>
