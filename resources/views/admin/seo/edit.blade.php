@@ -16,8 +16,15 @@
                 <div class="card mb-3">
                     <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label">Page slug <small class="text-muted">(leave blank for site default)</small></label>
-                            <input name="page_slug" id="page_slug" class="form-control" value="{{ old('page_slug', $seo->page_slug) }}" {{ $seo->is_site_default ? 'disabled' : '' }} />
+                            <label class="form-label">Choose page <small class="text-muted">(or select Custom to enter your own slug)</small></label>
+                            <select id="page_select" class="form-control mb-2">
+                                <option value="">-- (none) select page --</option>
+                                @foreach($pages as $slug => $label)
+                                    <option value="{{ $slug }}" @if(old('page_slug', $seo->page_slug) == $slug) selected @endif>{{ $label }} ({{ $slug == 'home' ? '/' : '/'.$slug }})</option>
+                                @endforeach
+                                <option value="__custom">Custom slug...</option>
+                            </select>
+                            <input name="page_slug" id="page_slug" class="form-control" value="{{ old('page_slug', $seo->page_slug) }}" placeholder="e.g. about" {{ $seo->is_site_default ? 'disabled' : '' }} />
                         </div>
 
                         <div class="form-check mb-3">
@@ -102,6 +109,34 @@
         descEl && descEl.addEventListener('input', updatePreview);
         slugEl && slugEl.addEventListener('input', updatePreview);
         siteDefault && siteDefault.addEventListener('change', function(){ toggleSlug(); updatePreview(); });
+
+        const pageSelect = document.getElementById('page_select');
+        function onPageSelect(){
+            if(!pageSelect) return;
+            const val = pageSelect.value;
+            if(val === '__custom'){
+                slugEl.value = '';
+                slugEl.removeAttribute('disabled');
+                slugEl.focus();
+            } else if(val === ''){
+                slugEl.value = '';
+                slugEl.removeAttribute('disabled');
+            } else {
+                slugEl.value = val;
+                slugEl.setAttribute('disabled','disabled');
+            }
+            updatePreview();
+        }
+
+        pageSelect && pageSelect.addEventListener('change', onPageSelect);
+
+        // initialize selector based on current slug
+        if(slugEl.value){
+            const foundOption = Array.from(pageSelect.options).find(o => o.value === slugEl.value);
+            if(foundOption) pageSelect.value = foundOption.value;
+            else pageSelect.value = '__custom';
+            onPageSelect();
+        }
 
         updatePreview();
         toggleSlug();

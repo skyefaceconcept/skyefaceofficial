@@ -10,17 +10,46 @@ class SeoController extends Controller
 {
     public function index()
     {
-        // Avoid eager loading the polymorphic `seoable` to prevent errors when a
-        // sentinel value (e.g. 'site') is stored in `seoable_type` which is not a
-        // real model class. We'll show the type/id in the UI instead of resolving
-        // the relation for the site default.
-        $items = SeoMeta::paginate(25);
+        // Show site-default first then pages alphabetically
+        $items = SeoMeta::orderBy('is_site_default', 'desc')->orderBy('page_slug')->paginate(25);
         return view('admin.seo.index', compact('items'));
+    }
+
+    public function create()
+    {
+        $pages = $this->availablePages();
+        return view('admin.seo.create', compact('pages'));
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'page_slug' => 'nullable|string|max:191|unique:seo_meta,page_slug',
+            'title' => 'nullable|string|max:191',
+            'meta_description' => 'required|string|max:160',
+            'is_site_default' => 'sometimes|boolean',
+        ]);
+
+        if (! empty($data['is_site_default'])) {
+            SeoMeta::where('is_site_default', true)->update(['is_site_default' => false]);
+            $data['is_site_default'] = true;
+            $data['page_slug'] = null;
+        } else {
+            $data['is_site_default'] = false;
+        }
+
+        $seo = SeoMeta::create($data);
+
+        // Dispatch ping job delayed by 5 minutes
+        \App\Jobs\PingSearchEngines::dispatch(url('/sitemap.xml'))->delay(now()->addMinutes(5));
+
+        return redirect()->route('admin.seo.index')->with('success', 'SEO entry created. Search engines will be notified shortly.');
     }
 
     public function edit(SeoMeta $seo)
     {
-        return view('admin.seo.edit', compact('seo'));
+        $pages = $this->availablePages();
+        return view('admin.seo.edit', compact('seo', 'pages'));
     }
 
     /**
@@ -40,6 +69,39 @@ class SeoController extends Controller
     {
         $seo = SeoMeta::firstOrCreate(['seoable_type' => 'page', 'page_slug' => $slug]);
         return $this->update($request, $seo);
+    }
+
+    /**
+     * Collect available public pages (slugs) from web routes for convenience in admin.
+     */
+    protected function availablePages(): array
+    {
+        $pages = [];
+        foreach (\Route::getRoutes() as $route) {
+            try {
+                // only public GET routes
+                $methods = $route->methods();
+            } catch (\Throwable $e) {
+                continue;
+            }
+            if (! in_array('GET', $methods)) continue;
+
+            $uri = $route->uri();
+            // skip admin & api & parameterized routes
+            if (str_starts_with($uri, 'admin') || str_starts_with($uri, 'api') || str_contains($uri, '{')) continue;
+
+            $slug = trim($uri, '/');
+            $slug = $slug === '' ? 'home' : $slug;
+
+            // human label: route name or uri
+            $label = $route->getName() ?: ($slug === 'home' ? 'Home' : ucfirst(str_replace('-', ' ', $slug)));
+
+            $pages[$slug] = $label;
+        }
+
+        // ensure unique and sorted
+        ksort($pages);
+        return $pages;
     }
 
     // AI generation, remote page fetching and preview endpoints removed to simplify SEO features. AIWriter-based methods were intentionally deleted to keep meta description management deterministic and auditable.
@@ -110,15 +172,36 @@ class SeoController extends Controller
     public function update(Request $request, SeoMeta $seo)
     {
         $data = $request->validate([
-            'title' => 'nullable|string|max:255',
+            'page_slug' => 'nullable|string|max:191|unique:seo_meta,page_slug,' . $seo->id,
+            'title' => 'nullable|string|max:191',
             'meta_description' => 'required|string|max:160',
+            'is_site_default' => 'sometimes|boolean',
         ]);
+
+        if (! empty($data['is_site_default'])) {
+            SeoMeta::where('is_site_default', true)->update(['is_site_default' => false]);
+            $data['is_site_default'] = true;
+            $data['page_slug'] = null;
+        } else {
+            $data['is_site_default'] = false;
+        }
 
         // Ensure meta description is trimmed and within length limits
         $data['meta_description'] = trim(mb_substr($data['meta_description'], 0, 160));
 
         $seo->update($data);
 
+        \App\Jobs\PingSearchEngines::dispatch(url('/sitemap.xml'))->delay(now()->addMinutes(5));
+
         return redirect()->route('admin.seo.index')->with('success', 'SEO updated');
+    }
+
+    public function destroy(SeoMeta $seo)
+    {
+        $seo->delete();
+
+        \App\Jobs\PingSearchEngines::dispatch(url('/sitemap.xml'))->delay(now()->addMinutes(5));
+
+        return redirect()->route('admin.seo.index')->with('success', 'SEO entry deleted');
     }
 }
