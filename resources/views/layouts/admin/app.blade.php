@@ -87,6 +87,10 @@
                 padding: 15px 20px !important;
                 min-height: 60px;
             }
+            /* Make the page content start below the taller navbar on desktop */
+            .page-body-wrapper {
+                padding-top: 60px !important;
+            }
         }
 
         /* Page Body Wrapper - responsive layout */
@@ -100,6 +104,22 @@
             flex: 1 !important;
             overflow-x: hidden !important;
             transition: margin-left 0.3s ease, width 0.3s ease !important;
+        }
+
+        /* Make brand wrapper align and shrink with sidebar when collapsed */
+        .navbar .navbar-brand-wrapper {
+            height: 100%;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: min-width 0.25s ease, padding 0.25s ease;
+        }
+
+        .page-body-wrapper.sidebar-collapsed .navbar-brand-wrapper {
+            min-width: 70px !important;
+            max-width: 70px !important;
+            padding-left: 8px !important;
+            padding-right: 8px !important;
         }
 
         /* Mobile - hide sidebar by default */
