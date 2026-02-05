@@ -274,6 +274,11 @@
             width: 70px !important;
         }
 
+        .page-body-wrapper.sidebar-collapsed {
+            margin-left: 70px !important;
+            width: calc(100% - 70px) !important;
+        }
+
         @media (max-width: 768px) {
             .sidebar.sidebar-collapsed {
                 left: -70px !important;
