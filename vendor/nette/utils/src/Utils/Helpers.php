@@ -14,9 +14,6 @@ use function array_unique, ini_get, levenshtein, max, min, ob_end_clean, ob_get_
 use const PHP_OS_FAMILY;
 
 
-/**
- * Miscellaneous utilities.
- */
 class Helpers
 {
 	public const IsWindows = PHP_OS_FAMILY === 'Windows';
@@ -24,7 +21,6 @@ class Helpers
 
 	/**
 	 * Executes a callback and returns the captured output as a string.
-	 * @param  callable(): void  $func
 	 */
 	public static function capture(callable $func): string
 	{

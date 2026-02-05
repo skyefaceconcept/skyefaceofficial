@@ -9,19 +9,18 @@ class SeoMeta extends Model
     protected $table = 'seo_meta';
 
     protected $fillable = [
-        'title', 'meta_description', 'meta_keywords', 'canonical', 'noindex', 'nofollow',
-        'og_title', 'og_description', 'og_image',
-        'twitter_title', 'twitter_description', 'twitter_image',
-        'json_ld'
+        'page_slug',
+        'title',
+        'meta_description',
+        'is_site_default',
     ];
 
     protected $casts = [
-        'noindex' => 'boolean',
-        'nofollow' => 'boolean',
+        'is_site_default' => 'boolean',
     ];
 
-    public function seoable()
+    public static function siteDefault(): ?self
     {
-        return $this->morphTo();
+        return static::where('is_site_default', true)->first();
     }
 }

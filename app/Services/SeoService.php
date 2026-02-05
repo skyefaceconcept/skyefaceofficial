@@ -34,13 +34,13 @@ class SeoService
         $slug = $slug === '' ? 'home' : $slug;
 
         // Try page-specific SEO row
-        $pageSeo = \App\Models\SeoMeta::where('seoable_type','page')->where('page_slug', $slug)->first();
+        $pageSeo = \App\Models\SeoMeta::where('page_slug', $slug)->first();
         if ($pageSeo && $pageSeo->meta_description) {
             return trim(mb_substr($pageSeo->meta_description, 0, 160));
         }
 
         // Site-wide default
-        $siteSeo = \App\Models\SeoMeta::where('seoable_type','site')->first();
+        $siteSeo = \App\Models\SeoMeta::where('is_site_default', true)->first();
         if ($siteSeo && $siteSeo->meta_description) {
             return trim(mb_substr($siteSeo->meta_description, 0, 160));
         }

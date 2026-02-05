@@ -22,8 +22,6 @@ final class Callback
 
 	/**
 	 * Invokes internal PHP function with own error handler.
-	 * @param  list<mixed>  $args
-	 * @param  callable(string, int): ?bool  $onError
 	 */
 	public static function invokeSafe(string $function, array $args, callable $onError): mixed
 	{
@@ -52,10 +50,10 @@ final class Callback
 	/**
 	 * Checks that $callable is valid PHP callback. Otherwise throws exception. If the $syntax is set to true, only verifies
 	 * that $callable has a valid structure to be used as a callback, but does not verify if the class or method actually exists.
-	 * @return callable(): mixed
+	 * @return callable
 	 * @throws Nette\InvalidArgumentException
 	 */
-	public static function check(mixed $callable, bool $syntax = false): mixed
+	public static function check(mixed $callable, bool $syntax = false)
 	{
 		if (!is_callable($callable, $syntax)) {
 			throw new Nette\InvalidArgumentException(
@@ -86,7 +84,7 @@ final class Callback
 
 	/**
 	 * Returns reflection for method or function used in PHP callback.
-	 * @param  callable(): mixed  $callable  type check is escalated to ReflectionException
+	 * @param  callable  $callable  type check is escalated to ReflectionException
 	 * @throws \ReflectionException  if callback is not valid
 	 */
 	public static function toReflection($callable): \ReflectionMethod|\ReflectionFunction
@@ -109,7 +107,6 @@ final class Callback
 
 	/**
 	 * Checks whether PHP callback is function or static method.
-	 * @param  callable(): mixed  $callable
 	 */
 	public static function isStatic(callable $callable): bool
 	{
@@ -119,8 +116,6 @@ final class Callback
 
 	/**
 	 * Unwraps closure created by Closure::fromCallable().
-	 * @param  \Closure(): mixed  $closure
-	 * @return \Closure|array{object|class-string, string}|callable-string
 	 */
 	public static function unwrap(\Closure $closure): callable|array
 	{

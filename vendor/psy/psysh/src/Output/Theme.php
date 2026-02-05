@@ -3,7 +3,7 @@
 /*
  * This file is part of Psy Shell.
  *
- * (c) 2012-2026 Justin Hileman
+ * (c) 2012-2025 Justin Hileman
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -34,7 +34,6 @@ class Theme
         'returnValue'  => '=>  ',
     ];
 
-    // Custom themes fall back to DEFAULT_STYLES for any undefined style.
     const DEFAULT_STYLES = [
         'info'    => ['white', 'blue', ['bold']],
         'warning' => ['black', 'yellow'],
@@ -47,7 +46,7 @@ class Theme
         'urgent' => ['red'],
         'hidden' => ['black'],
 
-        // Keywords
+        // Visibility
         'public'    => [null, null, ['bold']],
         'protected' => ['yellow'],
         'private'   => ['red'],
@@ -55,7 +54,6 @@ class Theme
         'const'     => ['cyan'],
         'class'     => ['blue', null, ['underscore']],
         'function'  => [null],
-        'virtual'   => ['magenta'],
         'default'   => [null],
 
         // Types

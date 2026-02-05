@@ -21,14 +21,5 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
-
-        // Create a site default SEO entry (seoable_type = 'site')
-        \App\Models\SeoMeta::firstOrCreate([
-            'seoable_id' => 0,
-            'seoable_type' => 'site'
-        ], [
-            'title' => config('app.name'),
-            'meta_description' => config('app.name') . ' - Official site',
-        ]);
     }
 }

@@ -5,9 +5,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <!-- Meta description: managed centrally. Falls back to `config('app.description')` if none is set. -->
-        <meta name="description" content="{{ e($pageDescription ?? config('app.description','')) }}">
-
         <title>{{ config('app.name', 'Laravel') }}</title>
 
         <!-- Company favicon (if uploaded, fallback to default) -->
@@ -40,22 +37,20 @@
     <body class="font-sans antialiased">
         <x-banner />
 
-        <div class="min-h-screen bg-gray-50 md:bg-gray-100">
+        <div class="min-h-screen bg-gray-100">
             @livewire('navigation-menu')
 
             <!-- Page Heading -->
             @if (isset($header))
-                <header class="bg-white shadow-sm md:shadow">
-                    <div class="max-w-7xl mx-auto py-4 px-3 sm:py-6 sm:px-6 lg:px-8">
-                        <div class="text-lg sm:text-xl font-semibold text-gray-900">
-                            {{ $header }}
-                        </div>
+                <header class="bg-white shadow">
+                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                        {{ $header }}
                     </div>
                 </header>
             @endif
 
             <!-- Page Content -->
-            <main class="px-3 sm:px-4 md:px-6">
+            <main>
                 @isset($slot)
                     {{ $slot }}
                 @else
