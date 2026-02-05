@@ -17,7 +17,6 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\ContactTicketController;
-use App\Http\Controllers\Admin\SeoController as AdminSeoController;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Mail;
@@ -81,9 +80,6 @@ Route::post('/debug/checkout-test', function (\Illuminate\Http\Request $request)
 Route::get('/contact', function () { return view('contact'); })->name('contact.show');
 Route::post('/contact/send', [ContactController::class, 'store'])->name('contact.store');
 
-// robots.txt: served from public/robots.txt for simplicity.
-// Dynamic robots route removed as part of simplified SEO feature set. Please place a static `robots.txt` in the `public/` directory if needed.
-
 // Public Legal Pages Routes
 Route::get('/terms', function () { return view('terms'); })->name('terms');
 Route::get('/policy', function () { return view('policy'); })->name('policy');
@@ -101,7 +97,7 @@ Route::post('/quotes/track', [QuoteController::class, 'track'])->name('quotes.tr
 Route::get('/repairs/track', function () { return view('repairs.track'); })->name('repairs.track.page');
 Route::post('/repairs', [RepairController::class, 'store'])->name('repairs.store');
 Route::post('/repairs/status', [RepairController::class, 'searchStatus'])->name('repairs.status');
-Route::get('/repairs/track/{invoiceNumber}', [RepairController::class, 'getStatus'])->name('repairs.track.show');
+Route::get('/repairs/track/{invoiceNumber}', [RepairController::class, 'getStatus'])->name('repairs.status');
 Route::get('/api/repairs/pricing', [RepairController::class, 'getPricing'])->name('api.repairs.pricing');
 Route::get('/api/payment/processor', [RepairController::class, 'getActivePaymentProcessor'])->name('api.payment.processor');
 Route::get('/repairs/{repair}/payment', [RepairController::class, 'showRepairPaymentForm'])->name('repairs.payment-form');
@@ -232,15 +228,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     // Admin Quote Management
     Route::resource('quotes', AdminQuoteController::class)->only(['index', 'show', 'destroy']);
     Route::put('quotes/{quote}/status', [AdminQuoteController::class, 'updateStatus'])->name('quotes.updateStatus');
-
-    // SEO Management
-    Route::resource('seo', AdminSeoController::class)->only(['index', 'edit', 'update']);
-
-    // Edit static 'page' SEO by slug (no model)
-    Route::get('seo/page/{slug}/edit', [AdminSeoController::class, 'editPage'])->name('seo.editPage');
-    Route::post('seo/page/{slug}/update', [AdminSeoController::class, 'updatePage'])->name('seo.updatePage');
-
-    // AI endpoints removed: automated AI generation & remote page fetching disabled for a simpler, deterministic SEO description manager.
     Route::post('quotes/{quote}/respond', [AdminQuoteController::class, 'respond'])->name('quotes.respond');
     Route::post('quotes/{quote}/notes', [AdminQuoteController::class, 'addNotes'])->name('quotes.addNotes');
 

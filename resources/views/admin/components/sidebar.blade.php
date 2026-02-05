@@ -227,12 +227,8 @@
               <i class="menu-icon mdi mdi-database"></i>
               <span>Migrations</span>
             </a>
-          </li>            <li class="nav-item">
-              <a class="nav-link" href="{{ route('admin.seo.index') }}">
-                <i class="menu-icon mdi mdi-web"></i>
-                <span>SEO</span>
-              </a>
-            </li>          @endpermission
+          </li>
+          @endpermission
         </ul>
       </div>
     </li>

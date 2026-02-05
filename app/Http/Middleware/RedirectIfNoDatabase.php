@@ -39,17 +39,19 @@ class RedirectIfNoDatabase
             }
         }
 
-        // Try a lightweight DB connection check; if it fails, return JSON 503 for API clients or redirect to installer for web
+        // For API/JSON clients, return a JSON service unavailable message
+        if ($request->expectsJson()) {
+            \Log::debug('RedirectIfNoDatabase: expectsJson -> returning 503', ['path' => $path]);
+            return response()->json(['message' => 'Application not installed or database unavailable.'], 503);
+        }
+
+        // Try a lightweight DB connection check; if it fails, redirect to installer
         try {
             DB::connection()->getPdo();
             \Log::debug('RedirectIfNoDatabase: DB connection OK', ['path' => $path]);
             return $next($request);
         } catch (\Throwable $e) {
-            \Log::warning('RedirectIfNoDatabase: DB connection failed', ['path' => $path, 'error' => $e->getMessage()]);
-            // API/JSON clients should get a 503 so AJAX callers can handle it gracefully
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'Application not installed or database unavailable.'], 503);
-            }
+            \Log::warning('RedirectIfNoDatabase: DB connection failed, redirecting to installer', ['path' => $path, 'error' => $e->getMessage()]);
             return redirect()->route('install.show');
         }
     }

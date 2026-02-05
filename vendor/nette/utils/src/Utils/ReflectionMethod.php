@@ -18,8 +18,7 @@ use function explode, is_string, str_contains;
  */
 final class ReflectionMethod extends \ReflectionMethod
 {
-	/** @var \ReflectionClass<object> */
-	private readonly \ReflectionClass $originalClass;
+	private \ReflectionClass $originalClass;
 
 
 	public function __construct(object|string $objectOrMethod, ?string $method = null)
@@ -32,7 +31,6 @@ final class ReflectionMethod extends \ReflectionMethod
 	}
 
 
-	/** @return \ReflectionClass<object> */
 	public function getOriginalClass(): \ReflectionClass
 	{
 		return $this->originalClass;

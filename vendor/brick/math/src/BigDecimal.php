@@ -7,34 +7,23 @@ namespace Brick\Math;
 use Brick\Math\Exception\DivisionByZeroException;
 use Brick\Math\Exception\MathException;
 use Brick\Math\Exception\NegativeNumberException;
-use Brick\Math\Exception\RoundingNecessaryException;
 use Brick\Math\Internal\Calculator;
 use Brick\Math\Internal\CalculatorRegistry;
 use InvalidArgumentException;
 use LogicException;
 use Override;
 
-use function func_num_args;
-use function in_array;
-use function intdiv;
-use function max;
 use function rtrim;
 use function sprintf;
 use function str_pad;
 use function str_repeat;
 use function strlen;
 use function substr;
-use function trigger_error;
 
-use const E_USER_DEPRECATED;
 use const STR_PAD_LEFT;
 
 /**
- * An arbitrarily large decimal number.
- *
- * This class is immutable.
- *
- * The scale of the number is the number of digits after the decimal point. It is always positive or zero.
+ * Immutable, arbitrary-precision signed decimal numbers.
  */
 final readonly class BigDecimal extends BigNumber
 {
@@ -236,14 +225,14 @@ final readonly class BigDecimal extends BigNumber
      *
      * @param BigNumber|int|float|string $that         The divisor.
      * @param int|null                   $scale        The desired scale, or null to use the scale of this number.
-     * @param RoundingMode               $roundingMode An optional rounding mode, defaults to Unnecessary.
+     * @param RoundingMode               $roundingMode An optional rounding mode, defaults to UNNECESSARY.
      *
-     * @throws InvalidArgumentException If the scale is invalid.
+     * @throws InvalidArgumentException If the scale or rounding mode is invalid.
      * @throws MathException            If the number is invalid, is zero, or rounding was necessary.
      *
      * @pure
      */
-    public function dividedBy(BigNumber|int|float|string $that, ?int $scale = null, RoundingMode $roundingMode = RoundingMode::Unnecessary): BigDecimal
+    public function dividedBy(BigNumber|int|float|string $that, ?int $scale = null, RoundingMode $roundingMode = RoundingMode::UNNECESSARY): BigDecimal
     {
         $that = BigDecimal::of($that);
 
@@ -254,7 +243,7 @@ final readonly class BigDecimal extends BigNumber
         if ($scale === null) {
             $scale = $this->scale;
         } elseif ($scale < 0) {
-            throw new InvalidArgumentException('Scale must not be negative.');
+            throw new InvalidArgumentException('Scale cannot be negative.');
         }
 
         if ($that->value === '1' && $that->scale === 0 && $scale === $this->scale) {
@@ -274,28 +263,6 @@ final readonly class BigDecimal extends BigNumber
      *
      * The scale of the result is automatically calculated to fit all the fraction digits.
      *
-     * @deprecated Will be removed in 0.15. Use dividedByExact() instead.
-     *
-     * @param BigNumber|int|float|string $that The divisor. Must be convertible to a BigDecimal.
-     *
-     * @throws MathException If the divisor is not a valid number, is not convertible to a BigDecimal, is zero,
-     *                       or the result yields an infinite number of digits.
-     */
-    public function exactlyDividedBy(BigNumber|int|float|string $that): BigDecimal
-    {
-        trigger_error(
-            'BigDecimal::exactlyDividedBy() is deprecated and will be removed in 0.15. Use dividedByExact() instead.',
-            E_USER_DEPRECATED,
-        );
-
-        return $this->dividedByExact($that);
-    }
-
-    /**
-     * Returns the exact result of the division of this number by the given one.
-     *
-     * The scale of the result is automatically calculated to fit all the fraction digits.
-     *
      * @param BigNumber|int|float|string $that The divisor. Must be convertible to a BigDecimal.
      *
      * @throws MathException If the divisor is not a valid number, is not convertible to a BigDecimal, is zero,
@@ -303,7 +270,7 @@ final readonly class BigDecimal extends BigNumber
      *
      * @pure
      */
-    public function dividedByExact(BigNumber|int|float|string $that): BigDecimal
+    public function exactlyDividedBy(BigNumber|int|float|string $that): BigDecimal
     {
         $that = BigDecimal::of($that);
 
@@ -331,7 +298,7 @@ final readonly class BigDecimal extends BigNumber
             }
         }
 
-        return $this->dividedBy($that, $scale)->strippedOfTrailingZeros();
+        return $this->dividedBy($that, $scale)->stripTrailingZeros();
     }
 
     /**
@@ -344,24 +311,14 @@ final readonly class BigDecimal extends BigNumber
      * @param BigNumber|int|float|string $min The minimum. Must be convertible to a BigDecimal.
      * @param BigNumber|int|float|string $max The maximum. Must be convertible to a BigDecimal.
      *
-     * @throws MathException            If min/max are not convertible to a BigDecimal.
-     * @throws InvalidArgumentException If min is greater than max.
-     *
-     * @pure
+     * @throws MathException If min/max are not convertible to a BigDecimal.
      */
     public function clamp(BigNumber|int|float|string $min, BigNumber|int|float|string $max): BigDecimal
     {
-        $min = BigDecimal::of($min);
-        $max = BigDecimal::of($max);
-
-        if ($min->isGreaterThan($max)) {
-            throw new InvalidArgumentException('Minimum value must be less than or equal to maximum value.');
-        }
-
         if ($this->isLessThan($min)) {
-            return $min;
+            return BigDecimal::of($min);
         } elseif ($this->isGreaterThan($max)) {
-            return $max;
+            return BigDecimal::of($max);
         }
 
         return $this;
@@ -488,33 +445,17 @@ final readonly class BigDecimal extends BigNumber
     }
 
     /**
-     * Returns the square root of this number, rounded to the given scale according to the given rounding mode.
+     * Returns the square root of this number, rounded down to the given number of decimals.
      *
-     * @param int          $scale        The target scale.
-     * @param RoundingMode $roundingMode The rounding mode to use, defaults to Down.
-     *                                   ⚠️ WARNING: the default rounding mode was kept as Down for backward
-     *                                   compatibility, but will change to Unnecessary in version 0.15. Pass a rounding
-     *                                   mode explicitly to avoid this upcoming breaking change.
-     *
-     * @throws InvalidArgumentException   If the scale is negative.
-     * @throws NegativeNumberException    If this number is negative.
-     * @throws RoundingNecessaryException If RoundingMode::Unnecessary is used, but rounding is necessary.
+     * @throws InvalidArgumentException If the scale is negative.
+     * @throws NegativeNumberException  If this number is negative.
      *
      * @pure
      */
-    public function sqrt(int $scale, RoundingMode $roundingMode = RoundingMode::Down): BigDecimal
+    public function sqrt(int $scale): BigDecimal
     {
-        if (func_num_args() === 1) {
-            // @phpstan-ignore-next-line
-            trigger_error(
-                'The default rounding mode of BigDecimal::sqrt() will change from Down to Unnecessary in version 0.15. ' .
-                'Pass a rounding mode explicitly to avoid this breaking change.',
-                E_USER_DEPRECATED,
-            );
-        }
-
         if ($scale < 0) {
-            throw new InvalidArgumentException('Scale must not be negative.');
+            throw new InvalidArgumentException('Scale cannot be negative.');
         }
 
         if ($this->value === '0') {
@@ -526,40 +467,24 @@ final readonly class BigDecimal extends BigNumber
         }
 
         $value = $this->value;
-        $inputScale = $this->scale;
+        $addDigits = 2 * $scale - $this->scale;
 
-        if ($inputScale % 2 !== 0) {
-            $value .= '0';
-            $inputScale++;
+        if ($addDigits > 0) {
+            // add zeros
+            $value .= str_repeat('0', $addDigits);
+        } elseif ($addDigits < 0) {
+            // trim digits
+            if (-$addDigits >= strlen($this->value)) {
+                // requesting a scale too low, will always yield a zero result
+                return new BigDecimal('0', $scale);
+            }
+
+            $value = substr($value, 0, $addDigits);
         }
 
-        $calculator = CalculatorRegistry::get();
+        $value = CalculatorRegistry::get()->sqrt($value);
 
-        // Keep one extra digit for rounding.
-        $intermediateScale = max($scale, intdiv($inputScale, 2)) + 1;
-        $value .= str_repeat('0', 2 * $intermediateScale - $inputScale);
-
-        $sqrt = $calculator->sqrt($value);
-        $isExact = $calculator->mul($sqrt, $sqrt) === $value;
-
-        if (! $isExact) {
-            if ($roundingMode === RoundingMode::Unnecessary) {
-                throw RoundingNecessaryException::roundingNecessary();
-            }
-
-            // Non-perfect-square sqrt is irrational, so the true value is strictly above this sqrt floor.
-            // Add one at the intermediate scale to guarantee Up/Ceiling round up at the target scale.
-            if (in_array($roundingMode, [RoundingMode::Up, RoundingMode::Ceiling], true)) {
-                $sqrt = $calculator->add($sqrt, '1');
-            }
-
-            // Irrational sqrt cannot land exactly on a midpoint; treat tie-to-down modes as HalfUp.
-            elseif (in_array($roundingMode, [RoundingMode::HalfDown, RoundingMode::HalfEven, RoundingMode::HalfFloor], true)) {
-                $roundingMode = RoundingMode::HalfUp;
-            }
-        }
-
-        return (new BigDecimal($sqrt, $intermediateScale))->toScale($scale, $roundingMode);
+        return new BigDecimal($value, $scale);
     }
 
     /**
@@ -611,24 +536,9 @@ final readonly class BigDecimal extends BigNumber
     /**
      * Returns a copy of this BigDecimal with any trailing zeros removed from the fractional part.
      *
-     * @deprecated Use strippedOfTrailingZeros() instead.
-     */
-    public function stripTrailingZeros(): BigDecimal
-    {
-        trigger_error(
-            'BigDecimal::stripTrailingZeros() is deprecated, use strippedOfTrailingZeros() instead.',
-            E_USER_DEPRECATED,
-        );
-
-        return $this->strippedOfTrailingZeros();
-    }
-
-    /**
-     * Returns a copy of this BigDecimal with any trailing zeros removed from the fractional part.
-     *
      * @pure
      */
-    public function strippedOfTrailingZeros(): BigDecimal
+    public function stripTrailingZeros(): BigDecimal
     {
         if ($this->scale === 0) {
             return $this;
@@ -656,7 +566,22 @@ final readonly class BigDecimal extends BigNumber
         return new BigDecimal($value, $scale);
     }
 
-    public function negated(): static
+    /**
+     * Returns the absolute value of this number.
+     *
+     * @pure
+     */
+    public function abs(): BigDecimal
+    {
+        return $this->isNegative() ? $this->negated() : $this;
+    }
+
+    /**
+     * Returns the negated value of this number.
+     *
+     * @pure
+     */
+    public function negated(): BigDecimal
     {
         return new BigDecimal(CalculatorRegistry::get()->neg($this->value), $this->scale);
     }
@@ -735,15 +660,10 @@ final readonly class BigDecimal extends BigNumber
      *
      * Example: `-123.456` => `-123`.
      *
-     * @deprecated Will be removed in 0.15 and re-introduced as returning BigInteger in 0.16.
+     * @pure
      */
     public function getIntegralPart(): string
     {
-        trigger_error(
-            'BigDecimal::getIntegralPart() is deprecated and will be removed in 0.15. It will be re-introduced as returning BigInteger in 0.16.',
-            E_USER_DEPRECATED,
-        );
-
         if ($this->scale === 0) {
             return $this->value;
         }
@@ -760,15 +680,10 @@ final readonly class BigDecimal extends BigNumber
      *
      * Examples: `-123.456` => '456', `123` => ''.
      *
-     * @deprecated Will be removed in 0.15 and re-introduced as returning BigDecimal with a different meaning in 0.16.
+     * @pure
      */
     public function getFractionalPart(): string
     {
-        trigger_error(
-            'BigDecimal::getFractionalPart() is deprecated and will be removed in 0.15. It will be re-introduced as returning BigDecimal with a different meaning in 0.16.',
-            E_USER_DEPRECATED,
-        );
-
         if ($this->scale === 0) {
             return '';
         }
@@ -785,13 +700,7 @@ final readonly class BigDecimal extends BigNumber
      */
     public function hasNonZeroFractionalPart(): bool
     {
-        if ($this->scale === 0) {
-            return false;
-        }
-
-        $value = $this->getUnscaledValueWithLeadingZeros();
-
-        return substr($value, -$this->scale) !== str_repeat('0', $this->scale);
+        return $this->getFractionalPart() !== str_repeat('0', $this->scale);
     }
 
     #[Override]
@@ -818,7 +727,7 @@ final readonly class BigDecimal extends BigNumber
     }
 
     #[Override]
-    public function toScale(int $scale, RoundingMode $roundingMode = RoundingMode::Unnecessary): BigDecimal
+    public function toScale(int $scale, RoundingMode $roundingMode = RoundingMode::UNNECESSARY): BigDecimal
     {
         if ($scale === $this->scale) {
             return $this;
