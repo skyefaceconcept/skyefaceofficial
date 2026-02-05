@@ -74,6 +74,18 @@
             </div>
           </div>
         </li>
+
+        {{-- Login/Register links (visible in collapsed mobile menu) --}}
+        @if (Route::has('login'))
+          @auth
+            <li class="nav-item d-lg-none"><a class="nav-link" href="{{ url('/dashboard') }}">Dashboard</a></li>
+          @else
+            <li class="nav-item d-lg-none"><a class="nav-link" href="{{ route('login') }}">Log in</a></li>
+            @if (Route::has('register'))
+              <li class="nav-item d-lg-none"><a class="nav-link" href="{{ route('register') }}">Register</a></li>
+            @endif
+          @endauth
+        @endif
       </ul>
     </div>
   </div>

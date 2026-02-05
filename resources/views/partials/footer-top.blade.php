@@ -15,10 +15,10 @@
 					<div class="heading-footer"><h2>Useful Links</h2></div>
 					<ul class="list-unstyled link-list">
 						<li><a href="{{ route('about') }}">About us</a><i class="fa fa-angle-right"></i></li>
-						<li><a href="{{ asset('buzbox/project.html') }}">Project</a><i class="fa fa-angle-right"></i></li>
-						<li><a href="{{ asset('buzbox/careers.html') }}">Career</a><i class="fa fa-angle-right"></i></li>
-						<li><a href="{{ asset('buzbox/faq.html') }}">FAQ</a><i class="fa fa-angle-right"></i></li>
-						<li><a href="{{ asset('buzbox/contact.html') }}">Contact us</a><i class="fa fa-angle-right"></i></li>
+						<li><a href="#">Project</a><i class="fa fa-angle-right"></i></li>
+						<li><a href="#">Career</a><i class="fa fa-angle-right"></i></li>
+						<li><a href="#">FAQ</a><i class="fa fa-angle-right"></i></li>
+						<li><a href="#">Contact us</a><i class="fa fa-angle-right"></i></li>
 					</ul>
 				</div>
 
