@@ -29,6 +29,9 @@
     <link rel="stylesheet" href="{{ asset('StarAdmin/src/assets/css/demo_1/style.css') }}">
     <!-- End Layout styles -->
 
+    <!-- Responsive Professional CSS -->
+    <link rel="stylesheet" href="{{ asset('css/responsive-professional.css') }}">
+
     <!-- Company favicon (if uploaded, fallback to default) -->
     @php
         $favicon = \App\Helpers\CompanyHelper::favicon();

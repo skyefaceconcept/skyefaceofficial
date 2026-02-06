@@ -7,12 +7,12 @@
         <a href="{{ route('admin.seo.index') }}" class="btn btn-light">Back</a>
     </div>
 
-    <form method="POST" action="{{ route('admin.seo.update', $seo) }}">
+    <form method="POST" action="{{ route('admin.seo.update', $seo) }}" class="form-responsive">
         @csrf
         @method('PUT')
 
-        <div class="row">
-            <div class="col-md-7">
+        <div class="row flex-column-mobile">
+            <div class="col-12 col-md-7">
                 <div class="card mb-3">
                     <div class="card-body">
                         <div class="mb-3">
@@ -51,7 +51,7 @@
                 </div>
             </div>
 
-            <div class="col-md-5">
+            <div class="col-12 col-md-5">
                 <div class="card shadow-sm mb-3">
                     <div class="card-body">
                         <h6 class="card-title">Live SEO Preview</h6>

@@ -22,6 +22,7 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\VerifyEmail;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\PageImpressionsController;
 use App\Http\Controllers\InstallController;
 
 // Installer routes (re-enabled when not already installed). Routes that accept POST
@@ -97,7 +98,7 @@ Route::post('/quotes/track', [QuoteController::class, 'track'])->name('quotes.tr
 Route::get('/repairs/track', function () { return view('repairs.track'); })->name('repairs.track.page');
 Route::post('/repairs', [RepairController::class, 'store'])->name('repairs.store');
 Route::post('/repairs/status', [RepairController::class, 'searchStatus'])->name('repairs.status');
-Route::get('/repairs/track/{invoiceNumber}', [RepairController::class, 'getStatus'])->name('repairs.status');
+Route::get('/repairs/track/{invoiceNumber}', [RepairController::class, 'getStatus'])->name('repairs.track');
 Route::get('/api/repairs/pricing', [RepairController::class, 'getPricing'])->name('api.repairs.pricing');
 Route::get('/api/payment/processor', [RepairController::class, 'getActivePaymentProcessor'])->name('api.payment.processor');
 Route::get('/repairs/{repair}/payment', [RepairController::class, 'showRepairPaymentForm'])->name('repairs.payment-form');
@@ -279,6 +280,23 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('payments', [PaymentController::class, 'adminList'])->name('payments.index');
     Route::post('payments/{payment}/refresh', [PaymentController::class, 'adminRefreshPayment'])->name('payments.refresh');
     Route::post('payments/{payment}/update-status', [PaymentController::class, 'adminUpdatePaymentStatus'])->name('payments.updateStatus');
+
+    // Page Impressions Analytics Routes
+    Route::prefix('analytics')->name('analytics.')->group(function () {
+            Route::prefix('impressions')->name('page-impressions.')->group(function () {
+            Route::get('/', [PageImpressionsController::class, 'index'])->name('index');
+            Route::get('/stats', [PageImpressionsController::class, 'statistics'])->name('stats');
+            Route::get('/{page}', [PageImpressionsController::class, 'show'])->name('show');
+            Route::get('/devices/analytics', [PageImpressionsController::class, 'deviceAnalytics'])->name('devices');
+            Route::get('/browsers/analytics', [PageImpressionsController::class, 'browserAnalytics'])->name('browsers');
+            Route::get('/os/analytics', [PageImpressionsController::class, 'osAnalytics'])->name('os');
+            Route::get('/visitors/analytics', [PageImpressionsController::class, 'visitorAnalytics'])->name('visitors');
+            Route::get('/export', [PageImpressionsController::class, 'export'])->name('export');
+            Route::post('/filter', [PageImpressionsController::class, 'filter'])->name('filter');
+            Route::get('/chart-data', [PageImpressionsController::class, 'getChartData'])->name('chart-data');
+            Route::post('/cleanup', [PageImpressionsController::class, 'cleanup'])->name('cleanup');
+        });
+    });
 
 });
 

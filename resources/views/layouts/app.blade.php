@@ -62,5 +62,50 @@
         @stack('modals')
 
         @livewireScripts
+
+        <!-- Page Impression Time Tracking -->
+        <script>
+            (function() {
+                const pageStartTime = Date.now();
+                const pageUrl = window.location.href;
+                let timeSpentSeconds = 0;
+
+                // Update time spent every 10 seconds
+                const updateInterval = setInterval(() => {
+                    timeSpentSeconds = Math.round((Date.now() - pageStartTime) / 1000);
+                }, 10000);
+
+                // Send time spent on page before leaving
+                window.addEventListener('beforeunload', () => {
+                    clearInterval(updateInterval);
+                    timeSpentSeconds = Math.round((Date.now() - pageStartTime) / 1000);
+
+                    if (timeSpentSeconds > 0) {
+                        // Use sendBeacon for reliable delivery even if browser is closing
+                        const formData = new FormData();
+                        formData.append('page_url', pageUrl);
+                        formData.append('time_spent_seconds', timeSpentSeconds);
+                        formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+                        navigator.sendBeacon('/api/impression-time', formData);
+                    }
+                });
+
+                // Also track periodically while on page (every 30 seconds) for long sessions
+                setInterval(() => {
+                    if (timeSpentSeconds > 0 && timeSpentSeconds % 30 === 0) {
+                        const formData = new FormData();
+                        formData.append('page_url', pageUrl);
+                        formData.append('time_spent_seconds', timeSpentSeconds);
+                        formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+                        fetch('/api/impression-time', {
+                            method: 'POST',
+                            body: formData
+                        }).catch(() => {}); // Silently fail
+                    }
+                }, 30000);
+            })();
+        </script>
     </body>
 </html>

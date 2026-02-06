@@ -9,7 +9,7 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarResponsive">
-      <ul class="navbar-nav ml-auto">
+      <ul class="navbar-nav ml-auto flex-column-mobile flex-gap-mobile">
         <li class="nav-item"><a class="nav-link smooth-scroll" href="{{ route('home') }}">Home</a></li>
 
         <li class="nav-item dropdown">
@@ -25,7 +25,7 @@
 
         <li class="nav-item"><a class="nav-link smooth-scroll" href="{{ route('services') }}">Services</a></li>
 
-        <li class="nav-item"><a class="nav-link smooth-scroll" href="#" data-toggle="modal" data-target="#repairBookingModal" style="color: #28a745; font-weight: 600;"><i class="fa fa-wrench mr-1"></i>Quick Repair Booking</a></li>
+        <li class="nav-item"><a class="nav-link smooth-scroll" href="#" data-toggle="modal" data-target="#repairBookingModal" style="color: #28a745; font-weight: 600; white-space: nowrap;"><i class="fa fa-wrench mr-1 d-none-mobile"></i><span class="d-md-none">Repair</span><span class="d-none d-md-inline">Quick Repair Booking</span></a></li>
 
         {{-- <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle smooth-scroll" href="#" id="navbarDropdownPages" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Pages</a>

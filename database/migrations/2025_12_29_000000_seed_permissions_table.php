@@ -317,6 +317,68 @@ return new class extends Migration {
             'route' => 'admin.reports.export',
         ]);
 
+        // Page Impressions Analytics Permissions
+        Permission::create([
+            'name' => 'View Page Impressions',
+            'slug' => 'view_page_impressions',
+            'description' => 'Can view page impressions analytics dashboard',
+            'route' => 'admin.analytics.impressions.index',
+        ]);
+        Permission::create([
+            'name' => 'View Impression Details',
+            'slug' => 'view_impression_details',
+            'description' => 'Can view detailed page impression data and metrics',
+            'route' => 'admin.analytics.impressions.show',
+        ]);
+        Permission::create([
+            'name' => 'View Impression Statistics',
+            'slug' => 'view_impression_statistics',
+            'description' => 'Can view impression statistics and trends',
+            'route' => 'admin.analytics.impressions.stats',
+        ]);
+        Permission::create([
+            'name' => 'Export Impressions Data',
+            'slug' => 'export_impressions_data',
+            'description' => 'Can export page impressions data to CSV/Excel',
+            'route' => 'admin.analytics.impressions.export',
+        ]);
+        Permission::create([
+            'name' => 'Filter Impressions by Date',
+            'slug' => 'filter_impressions_date',
+            'description' => 'Can filter page impressions by date range',
+            'route' => 'admin.analytics.impressions.filter',
+        ]);
+        Permission::create([
+            'name' => 'View Device Analytics',
+            'slug' => 'view_device_analytics',
+            'description' => 'Can view impressions breakdown by device type (desktop, mobile, tablet)',
+            'route' => 'admin.analytics.impressions.devices',
+        ]);
+        Permission::create([
+            'name' => 'View Browser Analytics',
+            'slug' => 'view_browser_analytics',
+            'description' => 'Can view impressions breakdown by browser',
+            'route' => 'admin.analytics.impressions.browsers',
+        ]);
+        Permission::create([
+            'name' => 'View OS Analytics',
+            'slug' => 'view_os_analytics',
+            'description' => 'Can view impressions breakdown by operating system',
+            'route' => 'admin.analytics.impressions.os',
+        ]);
+        Permission::create([
+            'name' => 'View Visitor Analytics',
+            'slug' => 'view_visitor_analytics',
+            'description' => 'Can view visitor/user analytics and tracking',
+            'route' => 'admin.analytics.impressions.visitors',
+        ]);
+        Permission::create([
+            'name' => 'Clear Impression Data',
+            'slug' => 'clear_impression_data',
+            'description' => 'Can clear/delete older page impression records',
+            'route' => 'admin.analytics.impressions.clear',
+        ]);
+
         // Portfolio Management Permissions
         Permission::create([
             'name' => 'View Portfolio',
@@ -442,6 +504,8 @@ return new class extends Migration {
             'manage_payment_methods', 'view_payment_transactions', 'process_refunds',
             // Reporting & Analytics
             'view_analytics', 'export_reports',
+            // Page Impressions Analytics
+            'view_page_impressions', 'view_impression_details', 'view_impression_statistics', 'export_impressions_data', 'filter_impressions_date', 'view_device_analytics', 'view_browser_analytics', 'view_os_analytics', 'view_visitor_analytics', 'clear_impression_data',
             // Portfolio Management
             'view_portfolio', 'create_portfolio', 'edit_portfolio', 'delete_portfolio', 'manage_portfolio_footage', 'reorder_portfolio_footage',
             // Device Repair Management

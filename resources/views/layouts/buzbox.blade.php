@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="{{ asset('buzbox/css/owl-carousel/owl.carousel.min.css') }}">
     <link rel="stylesheet" href="{{ asset('buzbox/css/owl-carousel/owl.theme.default.min.css') }}">
     <link rel="stylesheet" href="{{ asset('buzbox/css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/responsive-professional.css') }}">
 
     @yield('extra-css')
 </head>
@@ -88,7 +89,7 @@
         <div class="container">
             <div class="row py-5">
                 <!-- Company Info -->
-                <div class="col-md-4 mb-4">
+                <div class="col-12 col-sm-6 col-md-4 mb-4">
                     <h6 class="cl-white mb-3">{{ $branding?->company_name ?? config('app.name') }}</h6>
                     <ul class="list-unstyled cl-white" style="font-size: 13px;">
                         @if($branding?->rc_number)
@@ -102,8 +103,8 @@
                             </li>
                         @endif
                         <li class="mb-2">
-                            <i class="fa fa-envelope"></i> 
-                            <a href="mailto:{{ config('mail.from.address', 'info@company.com') }}" class="cl-white">
+                            <i class="fa fa-envelope"></i>
+                            <a href="mailto:{{ config('mail.from.address', 'info@company.com') }}" class="cl-white" style="word-break: break-word;">
                                 {{ config('mail.from.address', 'info@company.com') }}
                             </a>
                         </li>
@@ -111,7 +112,7 @@
                 </div>
 
                 <!-- Quick Links -->
-                <div class="col-md-4 mb-4">
+                <div class="col-12 col-sm-6 col-md-4 mb-4">
                     <h6 class="cl-white mb-3">Quick Links</h6>
                     <ul class="list-unstyled">
                         <li><a href="{{ route('home') }}" class="cl-white">Home</a></li>
@@ -122,7 +123,7 @@
                 </div>
 
                 <!-- Legal Links -->
-                <div class="col-md-4 mb-4">
+                <div class="col-12 col-sm-6 col-md-4 mb-4">
                     <h6 class="cl-white mb-3">Legal</h6>
                     <ul class="list-unstyled">
                         <li><a href="{{ route('policy') }}" class="cl-white">Privacy Policy</a></li>
@@ -132,7 +133,7 @@
             </div>
 
             <div class="row border-top pt-4">
-                <div class="col-md-12 text-center">
+                <div class="col-12 text-center">
                     <p class="cl-white mt-3">
                         &copy; {{ date('Y') }} {{ $branding?->company_name ?? config('app.name') }}. All rights reserved.
                     </p>
